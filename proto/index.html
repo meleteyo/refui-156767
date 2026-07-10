@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>콘텐츠/마케팅 대행사 맞춤형 통합 ERP 구축 — 라이브 프로토타입 (#156767)</title>
+  <meta name="description" content="콘텐츠/마케팅 대행사 맞춤형 통합 ERP 구축 클릭 가능한 관리자 콘솔 프로토타입" />
+
+  <!-- Pretendard (한글 최적화) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CDN (JIT) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Pretendard Variable"', 'Pretendard', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'SF Mono', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- React 18 + Babel (proto 트랙 전용) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    html, body {
+      font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+      background: #020617;
+      color: #f1f5f9;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    .font-mono, code, .tabular { font-family: 'JetBrains Mono', monospace; }
+
+    /* ⚠️ Aurora opacity ≤ 0.10 (proto 가독성) */
+    .aurora-bg {
+      position: fixed; inset: 0; z-index: -10; background: #020617;
+    }
+    .aurora-bg::before {
+      content: ''; position: absolute; inset: 0; opacity: 0.08;
+      background:
+        radial-gradient(at 15% 25%, rgba(139,92,246,0.4), transparent 50%),
+        radial-gradient(at 85% 75%, rgba(16,185,129,0.3), transparent 50%);
+    }
+
+    /* 화면 전환 fade-in */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+    .scr { animation: fadeUp 0.32s ease-out; }
+
+    ::-webkit-scrollbar { width: 9px; height: 9px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.25); border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.45); }
+    ::selection { background: rgba(139,92,246,0.45); color: #fff; }
+
+    /* 모바일 가드 */
+    .mobile-guard { display: none; }
+    @media (max-width: 1023px) {
+      .mobile-guard {
+        display: flex; position: fixed; inset: 0; z-index: 100;
+        background: rgba(2,6,23,0.95); backdrop-filter: blur(20px);
+        align-items: center; justify-content: center; padding: 2rem; text-align: center;
+      }
+      .app-root { filter: blur(4px); pointer-events: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="aurora-bg" aria-hidden="true"></div>
+
+  <!-- 데이터 + 컴포넌트 + 4화면 (순서 중요) -->
+  <script src="./data.js"></script>
+  <script type="text/babel" src="./components.jsx"></script>
+  <script type="text/babel" src="./tweaks-panel.jsx"></script>
+  <script type="text/babel" src="./dashboard.jsx"></script>
+  <script type="text/babel" src="./console.jsx"></script>
+  <script type="text/babel" src="./history.jsx"></script>
+  <script type="text/babel" src="./templates.jsx"></script>
+  <script type="text/babel" src="./orders.jsx"></script>
+  <script type="text/babel" src="./kanban.jsx"></script>
+  <script type="text/babel" src="./settlement.jsx"></script>
+  <script type="text/babel" src="./hr.jsx"></script>
+  <script type="text/babel" src="./admin.jsx"></script>
+
+  <!-- App shell -->
+  <div id="app-root" class="app-root"></div>
+
+  <!-- 모바일 가드 오버레이 -->
+  <div class="mobile-guard">
+    <div class="rounded-2xl bg-slate-900 border border-slate-700 p-8 max-w-sm">
+      <div class="text-2xl mb-3">🖥</div>
+      <h2 class="text-lg font-bold mb-2">데스크탑에서 열어주세요</h2>
+      <p class="text-sm text-slate-400">
+        본 프로토타입은 1024px 이상 해상도에서 최적화되어 있습니다.<br>
+        텍스트만 보시려면 <a href="../refui/" class="text-purple-400 underline">레퍼런스 UI</a>를 이용해주세요.
+      </p>
+    </div>
+  </div>
+
+  <!-- 데모 데이터 가드 배지 (필수) -->
+  <div class="fixed bottom-3 left-3 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[10px] text-amber-300 font-medium backdrop-blur-xl">
+    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+    데모 데이터 · 실데이터 미연결
+  </div>
+
+  <!-- App mount -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "brandName": "애드플로우",
+      "brandColor": "#a855f7",
+      "policyMode": "PRIORITY"
+    }/*EDITMODE-END*/;
+
+    function App() {
+      const [tweaks, setTweak] = window.useTweaks(TWEAK_DEFAULTS);
+      const [route, setRoute] = useState({ name: 'dashboard', payload: null });
+
+      const navigate = (name, payload) => setRoute({ name, payload: payload || null });
+
+      // demo iframe 호환성 — 외부에서 화면 전환 가능하게 노출
+      // demo/자동시연.html의 navIframe()가 iframe.contentWindow.__navigate(name)를 호출
+      useEffect(() => {
+        window.__navigate = (name) => setRoute({ name, payload: null });
+        return () => { delete window.__navigate; };
+      }, []);
+
+      const screens = {
+        dashboard:  window.Dashboard,
+        orders:     window.Orders,
+        kanban:     window.Kanban,
+        console:    window.RefundConsole,
+        templates:  window.Templates,
+        settlement: window.Settlement,
+        hr:         window.HR,
+        history:    window.History,
+        admin:      window.Admin,
+      };
+      const Screen = screens[route.name] || window.Dashboard;
+
+      const screenLabel = {
+        dashboard:  '01 대시보드',
+        orders:     '02 주문 관리',
+        kanban:     '03 작업 칸반',
+        console:    '04 환불 결재 콘솔',
+        templates:  '05 결재 양식',
+        settlement: '06 정산 관리',
+        hr:         '07 인사 · 조직',
+        history:    '08 이력 · 수집',
+        admin:      '09 시스템 설정',
+      }[route.name];
+
+      return (
+        <div className="min-h-screen flex" style={{ '--brand': tweaks.brandColor }}>
+          {/* Sidebar — 솔리드 다크 (투명도 금지) */}
+          <aside className="w-60 bg-slate-950 border-r border-slate-800 p-4 flex flex-col">
+            <div className="flex items-center gap-2 mb-8">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold" style={{ background: tweaks.brandColor }}>
+                {(tweaks.brandName || 'E')[0]}
+              </div>
+              <div>
+                <div className="font-bold text-sm">{tweaks.brandName}</div>
+                <div className="text-[10px] text-slate-500 font-mono">통합 ERP · #156767</div>
+              </div>
+            </div>
+            <nav className="flex-1 space-y-4 overflow-y-auto">
+              {[
+                { group: '개요',        items: [['dashboard', '대시보드', 'home']] },
+                { group: '업무',        items: [['orders', '주문 관리', 'file'], ['kanban', '작업 칸반', 'template']] },
+                { group: '결재',        items: [['console', '환불 결재', 'send'], ['templates', '결재 양식', 'shieldCheck']] },
+                { group: '재무 · 리소스', items: [['settlement', '정산 관리', 'db'], ['hr', '인사 · 조직', 'user2']] },
+                { group: '시스템',      items: [['history', '이력 · 수집', 'history'], ['admin', '시스템 설정', 'settings']] },
+              ].map(({ group, items }) => (
+                <div key={group}>
+                  <div className="px-3 mb-1 text-[10px] font-mono uppercase tracking-wider text-slate-600">{group}</div>
+                  <div className="space-y-1">
+                    {items.map(([key, label, icon]) => (
+                      <button key={key} onClick={() => navigate(key)}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm transition ${
+                          route.name === key
+                            ? 'bg-slate-800 text-white'
+                            : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                        }`}>
+                        <window.Icon name={icon} className="w-4 h-4" />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </nav>
+            <div className="pt-3 border-t border-slate-800 text-[10px] text-slate-600 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              환불 승인 시 7연쇄 자동 반영
+            </div>
+          </aside>
+
+          {/* Main */}
+          <main className="flex-1 overflow-auto" data-screen-label={screenLabel}>
+            <div className="scr p-8 max-w-[1440px] mx-auto" key={route.name + (route.payload?.orderId || '')}>
+              <Screen route={route} navigate={navigate} tweaks={tweaks} />
+            </div>
+          </main>
+
+          {/* Tweaks Panel — policyMode 전환 시 콘솔 Step 3 · 양식 프리뷰 결재란이 실제로 바뀜 */}
+          <window.TweaksPanel title="Tweaks">
+            <window.TweakSection label="브랜드" />
+            <window.TweakText label="회사명" value={tweaks.brandName} onChange={(v) => setTweak('brandName', v)} />
+            <window.TweakColor label="브랜드 색" value={tweaks.brandColor} onChange={(v) => setTweak('brandColor', v)} />
+
+            <window.TweakSection label="결재 정책" />
+            <window.TweakRadio
+              label="승인 방식"
+              value={tweaks.policyMode}
+              options={[
+                { value: 'PRIORITY', label: '순차 결재' },
+                { value: 'BROADCAST', label: '병렬 합의' },
+              ]}
+              onChange={(v) => setTweak('policyMode', v)}
+            />
+          </window.TweaksPanel>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('app-root')).render(<App />);
+  </script>
+</body>
+</html>

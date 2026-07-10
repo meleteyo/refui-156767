@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>콘텐츠/마케팅 대행사 맞춤형 통합 ERP 구축 — 레퍼런스 UI</title>
+  <meta name="description" content="콘텐츠/마케팅 대행사 맞춤형 통합 ERP 구축 레퍼런스 UI · IT 담당자용과 일반 고객용 두 버전 제공" />
+  <meta property="og:title" content="콘텐츠/마케팅 대행사 맞춤형 통합 ERP 구축 — 레퍼런스 UI" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://meleteyo.github.io/refui-156767/" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Pretendard Variable"', 'Pretendard', 'system-ui', 'sans-serif'] } } } };
+  </script>
+
+  <!-- Pretendard (한글 최적화) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <!-- ⚠️ gh/orioncactus/pretendard CDN은 폐기. npm/pretendard 사용. -->
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="./styles.css" />
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+      background: #020617;
+      color: #f1f5f9;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .aurora-bg { position: fixed; inset: 0; z-index: -10; background: #020617; }
+    .aurora-bg::before {
+      content: ''; position: absolute; inset: 0; opacity: 0.4;
+      background:
+        radial-gradient(at 15% 25%, rgba(139,92,246,0.35), transparent 50%),
+        radial-gradient(at 85% 75%, rgba(16,185,129,0.25), transparent 50%),
+        radial-gradient(at 50% 50%, rgba(236,72,153,0.15), transparent 45%);
+    }
+  </style>
+</head>
+
+<body data-client-type="landing">
+  <div class="aurora-bg" aria-hidden="true"></div>
+
+  <!-- Minimal header -->
+  <header class="max-w-5xl mx-auto w-full px-6 pt-8 flex items-center gap-3">
+    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 via-pink-500 to-emerald-500 shadow-lg shadow-purple-500/30"></div>
+    <div>
+      <div class="font-bold text-base leading-tight">마케팅 대행사 통합 ERP</div>
+      <div class="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+        <span>WISHKET</span>
+        <span class="font-mono text-purple-400">#156767</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero + cards -->
+  <main class="flex-1 flex items-center justify-center px-6 py-16">
+    <div class="max-w-5xl w-full">
+      <div class="text-center mb-12">
+        <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs bg-purple-500/10 border border-purple-500/20 text-purple-300 mb-6">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+          </span>
+          레퍼런스 UI · 제안서 참조용
+        </div>
+        <h1 class="text-4xl md:text-6xl font-bold leading-tight tracking-tight">
+          환영합니다.<br/>
+          <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-emerald-400 bg-clip-text text-transparent">
+            어떤 분이신가요?
+          </span>
+        </h1>
+        <p class="mt-6 text-lg text-slate-300 max-w-xl mx-auto">
+          고객님께 맞는 버전을 선택해 주세요. 두 버전 모두 동일한 분석을 기반으로 하되,
+          용어와 구성만 다릅니다.
+        </p>
+      </div>
+
+      <!-- Two cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <!-- IT Card -->
+        <a href="./it.html" class="group rounded-2xl p-8 backdrop-blur-3xl bg-white/5 border border-white/10 hover:bg-cyan-500/10 hover:border-cyan-500/30 transition-all hover:scale-[1.02] hover:-translate-y-1 shadow-2xl shadow-cyan-500/5 hover:shadow-cyan-500/20 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-3 rounded-xl bg-cyan-500/20">
+              <i data-lucide="cpu" class="w-6 h-6 text-cyan-300"></i>
+            </div>
+            <span class="text-xs font-mono text-cyan-400">IT</span>
+          </div>
+          <h2 class="text-2xl font-bold mb-2">IT 담당자이신가요?</h2>
+          <p class="text-sm text-slate-400 mb-6 leading-relaxed">
+            아키텍처·ADR·정산 엔진 설계·리스크 분석까지 기술 관점으로 자세히 보실 수 있습니다.
+          </p>
+          <ul class="space-y-2 text-xs text-slate-300 mb-6">
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-cyan-400"></i>환불 승인 7연쇄 처리 설계</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-cyan-400"></i>아키텍처 다이어그램 + ADR 8건</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-cyan-400"></i>리스크 17건 사전 분석</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-cyan-400"></i>17주 실행계획 타임라인</li>
+          </ul>
+          <div class="flex items-center justify-between text-sm font-semibold text-cyan-300">
+            <span>IT 버전 보기</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </a>
+
+        <!-- Non-IT Card -->
+        <a href="./nonit.html" class="group rounded-2xl p-8 backdrop-blur-3xl bg-white/5 border border-white/10 hover:bg-purple-500/10 hover:border-purple-500/30 transition-all hover:scale-[1.02] hover:-translate-y-1 shadow-2xl shadow-purple-500/5 hover:shadow-purple-500/20 focus:outline-none focus:ring-2 focus:ring-purple-500">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-3 rounded-xl bg-purple-500/20">
+              <i data-lucide="user" class="w-6 h-6 text-purple-300"></i>
+            </div>
+            <span class="text-xs font-mono text-purple-400">일반</span>
+          </div>
+          <h2 class="text-2xl font-bold mb-2">일반 고객이신가요?</h2>
+          <p class="text-sm text-slate-400 mb-6 leading-relaxed">
+            기술 용어 없이 <span class="text-purple-300">동작과 효과</span> 중심으로 쉽게 풀어드립니다.
+          </p>
+          <ul class="space-y-2 text-xs text-slate-300 mb-6">
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-400"></i>"이렇게 동작합니다" 흐름도</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-400"></i>업무 시간·비용 절감 효과</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-400"></i>ROI 계산기로 직접 확인</li>
+            <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-400"></i>자주 묻는 불안 해소 FAQ</li>
+          </ul>
+          <div class="flex items-center justify-between text-sm font-semibold text-purple-300">
+            <span>일반 버전 보기</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </a>
+      </div>
+
+      <p class="mt-8 text-center text-xs text-slate-500">
+        두 버전 모두 보고 싶으시면 양쪽을 각각 새 탭으로 여셔도 됩니다.
+      </p>
+    </div>
+  </main>
+
+  <!-- Minimal footer -->
+  <footer class="border-t border-white/10 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-5xl mx-auto px-6 flex flex-wrap items-center justify-center gap-4">
+      <span>위시켓 #<span class="font-mono text-purple-400">156767</span></span>
+      <span class="text-slate-700">·</span>
+      <a href="https://www.wishket.com/project/156767/" class="hover:text-purple-400">원문 공고</a>
+    </div>
+  </footer>
+
+  <script>lucide.createIcons();</script>
+</body>
+</html>

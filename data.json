@@ -1,0 +1,348 @@
+{
+  "meta": {
+    "projectId": "156767",
+    "title": "콘텐츠/마케팅 대행사 맞춤형 통합 ERP 구축",
+    "budget": "60,000,000원",
+    "duration": "120일",
+    "durationWeeks": 17,
+    "recruitType": "프라이빗 매칭 (PRIME·PRO·BOOST 파트너 공개)",
+    "field": "개발 · 디자인 · 기획 / 웹",
+    "tags": ["ERP 전사자원관리", "스크래핑ㆍAPI", "업무자동화ㆍRPA"],
+    "postedAt": "2026-07-09",
+    "deadline": "2026-07-16",
+    "applicants": "비공개",
+    "commentCount": "4건",
+    "client": "wo****** (경기도 고양시 덕양구)",
+    "requiredDeliverables": ["요구사항 정의서", "화면 설계서", "ERD 및 테이블 정의서", "원본 소스코드", "관리자용 시스템 사용 매뉴얼"],
+    "sourceUrl": "https://www.wishket.com/project/156767/",
+    "clientType": "it",
+    "disclaimer": "본 UI는 제안서 참고용이며 실제 서비스가 아닙니다. 모든 고객사명·금액·지표는 가상의 데모 데이터입니다."
+  },
+
+  "heroInsights": [
+    {
+      "id": "INSIGHT 1",
+      "title": "성패는 화면이 아니라 금액 계산 검증",
+      "body": "실제 주문/환불/재결제/정산 사례 5~10건 없이는 정산 로직과 \"자동 롤백\"의 정의 자체가 불가능. 현재 엑셀 양식·프로세스 흐름도와 함께 착수 전 최우선 요청 대상.",
+      "source": "1_요구사항검토서 §11 Top 1"
+    },
+    {
+      "id": "INSIGHT 2",
+      "title": "플랫폼 API는 '확인 후 자동화'",
+      "body": "판매 플랫폼 목록·API 제공 여부 미공개. 3~4주차 연동 PoC로 데이터 구조·로그인 가능성을 선검증하고, 그 전까지 엑셀 업로드를 1차 기준선으로 견적·일정 고정.",
+      "source": "1_요구사항검토서 §11 Top 2"
+    },
+    {
+      "id": "INSIGHT 3",
+      "title": "\"자동 롤백\"·승인선이 최대 복잡도",
+      "body": "결재→정산 연쇄 반영이 이 ERP의 차별화 핵심이자 최대 복잡도 지점. 매출을 덮어쓰지 않는 이벤트 원장 구조로 어떤 해석(소급 반영/원상 복원)이든 수용.",
+      "source": "1_요구사항검토서 §11 Top 3"
+    }
+  ],
+
+  "core": {
+    "hook": "환불 승인 한 번에 7가지가 정확히 함께 움직이는 ERP",
+    "sampleApproval": "APR-20260706-03",
+    "entryPoint": "POST /api/approvals/{id}/decision · decision=APPROVE",
+    "chain": [
+      { "step": 1, "name": "결재 상태 전이", "detail": "approvals.status → APPROVED", "tx": true },
+      { "step": 2, "name": "주문 상태 전이", "detail": "orders.status → PARTIALLY_REFUNDED (BS0010 전이표 검증)", "tx": true },
+      { "step": 3, "name": "매출 재계산", "detail": "sales_events += REFUND(−400,000) → netSales 1,200,000 → 800,000 (이벤트 원장 BS0001/BS0007)", "tx": true },
+      { "step": 4, "name": "정산 재계산", "detail": "미수행 작업 3건 제외 → 외주비 600,000 → 510,000 (단가 스냅샷 BS0002/MG1003)", "tx": true },
+      { "step": 5, "name": "손익 반영", "detail": "부서/프로젝트 손익 = 매출 − 환불 − 수수료 − 외주비 (집계 뷰 — 커밋 즉시)", "tx": true },
+      { "step": 6, "name": "감사 로그 기록", "detail": "audit_logs += 전/후 값 + 사유(approval_no) (MG1004)", "tx": true },
+      { "step": 7, "name": "알림 · 이메일 발송", "detail": "기안자·재무 담당자 통지 — 커밋 후 비동기 + 재시도 3회 (BS0011), 실패해도 재무 반영 불변", "tx": false }
+    ],
+    "guarantees": [
+      "연쇄 1~6은 @Transactional 단일 커밋 — 부분 성공이 구조적으로 불가능 (MG1001)",
+      "반려 시 데이터 무변경 보장 (BS0006) · 동시 승인은 낙관적 잠금(version)으로 차단",
+      "연쇄 도중 오류 시 \"데이터는 변경되지 않았습니다\" — 전체 롤백"
+    ]
+  },
+
+  "portfolio": {
+    "kpis": [
+      { "label": "이번 달 순매출 (환불 반영)", "value": 52400000, "unit": "₩", "deltaPct": 4.2, "positive": true, "note": "= Σ sales_events (결제 − 환불 + 재결제) · ADR-002" },
+      { "label": "이번 달 손익 (직접비 기준)", "value": 14830000, "unit": "₩", "positive": true },
+      { "label": "납기 준수율", "value": 94.2, "unit": "%", "note": "프리랜서 평가 지표 연동" },
+      { "label": "이번 달 처리 주문", "value": 128, "unit": "건", "note": "엑셀 업로드 96 · 수기 32" },
+      { "label": "내 차례 대기 결재", "value": 6, "unit": "건", "highlight": true, "note": "부분환불 3 · 단가변경 2 · 주문수정 1" }
+    ],
+    "trend": {
+      "labels": ["2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+      "values": [38200000, 41500000, 43900000, 46700000, 48100000, 50300000, 52400000]
+    },
+    "allocation": {
+      "labels": ["스마트스토어", "쿠팡", "자사몰", "이메일/문의", "수기 등록"],
+      "values": [42, 23, 18, 10, 7]
+    },
+    "orders": [
+      { "id": "ORD-2607-041", "platform": "스마트스토어", "clientName": "그린리프", "item": "인스타 릴스 15건", "netSales": 900000, "status": "IN_PROGRESS", "statusKo": "진행중", "assignee": "김하늘" },
+      { "id": "ORD-2607-042", "platform": "스마트스토어", "clientName": "한빛식품", "item": "블로그 콘텐츠 20건", "netSales": 800000, "refunded": 400000, "status": "PARTIALLY_REFUNDED", "statusKo": "부분환불", "assignee": "이서준" },
+      { "id": "ORD-2607-043", "platform": "쿠팡", "clientName": "모던가구", "item": "상세페이지 리뉴얼", "netSales": 2400000, "status": "DONE", "statusKo": "완료", "assignee": "박지우" },
+      { "id": "ORD-2607-044", "platform": "이메일", "clientName": "세림전자", "item": "유튜브 광고 영상 2편", "netSales": 3600000, "status": "ASSIGNED", "statusKo": "배정완료", "assignee": "김하늘" },
+      { "id": "ORD-2607-045", "platform": "수기 등록", "clientName": "블루밍뷰티", "item": "인플루언서 캠페인", "netSales": 5000000, "status": "REFUND_REQUESTED", "statusKo": "환불요청", "assignee": "최유나" },
+      { "id": "ORD-2607-046", "platform": "쿠팡", "clientName": "오름출판", "item": "SNS 채널 운영 (월)", "netSales": 1800000, "status": "RECEIVED", "statusKo": "접수", "assignee": "이서준" }
+    ],
+    "statusEnum": "RECEIVED → ASSIGNED → IN_PROGRESS → DONE · 환불 계열: REFUND_REQUESTED → PARTIALLY_REFUNDED (결재 승인 경유만 진입)"
+  },
+
+  "engine": {
+    "title": "덮어쓰지 않는 정산 엔진",
+    "sampleOrder": "ORD-2607-042 · 한빛식품",
+    "ledger": [
+      { "type": "PAYMENT", "amount": 1200000, "date": "2026-06-12", "note": "IMP-002 엑셀 업로드 · 플랫폼 결제 수수료 −42,000 별도 이벤트" },
+      { "type": "PARTIAL_REFUND", "amount": -400000, "date": "2026-07-06", "note": "결재 APR-20260706-03 승인 — 미진행분 3건 환불, 승인 전에는 이벤트 미적재" }
+    ],
+    "netSales": 800000,
+    "recalcCount": 2,
+    "payoutJudgement": { "kept": "17건 × ₩30,000 (REVIEW/DONE)", "excluded": "3건 제외 (TODO/IN_PROGRESS/ON_HOLD)", "payoutBefore": 600000, "payoutAfter": 510000 },
+    "finalProfit": { "formula": "800,000 (순매출) − 28,000 (수수료 재계산) − 510,000 (외주비)", "value": 262000 },
+    "policyNote": "비례 차감 정책 채택 시 decidePayoutInclusion 판정 함수만 교체 — 1주차 정책 확정(실사례 5~10건) 대비 설계",
+    "confirmedRule": "확정(CONFIRMED) 정산은 직접 수정 불가 — 결재 승인 경유 조정 이벤트(settlement_adjustments)로만 반영 (MG1003)"
+  },
+
+  "operator": {
+    "kpis": [
+      { "label": "권한 역할", "value": 5, "unit": "종", "note": "ADMIN·EXEC·TEAM_LEAD·FINANCE·STAFF" },
+      { "label": "감사 로그 누적", "value": 12847, "note": "전 모듈 AOP 자동 기록 · 전/후 값 보존" },
+      { "label": "알림 발송 성공률", "value": 99.2, "unit": "%", "note": "재시도 3회 포함 · 재무 반영과 분리" },
+      { "label": "이번 달 수집 배치", "value": 24, "unit": "건", "note": "성공 22 · 실패 1 · 대체 경로 1" }
+    ],
+    "importBatches": [
+      { "id": "IMP-002", "source": "EXCEL_UPLOAD", "status": "SUCCESS", "detail": "주문 120행 (정상 117 · 오류 3)" },
+      { "id": "IMP-003", "source": "SMARTSTORE_API", "status": "FAILED", "detail": "결제내역 자동 수집", "failReason": "로그인 차단 (플랫폼 보안 정책 변경)" },
+      { "id": "IMP-004", "source": "EXCEL_UPLOAD", "status": "SUCCESS", "detail": "45행 중 43 성공 · 2 오류 행 분리", "fallbackOf": "IMP-003" }
+    ],
+    "rbacRoles": ["ADMIN", "EXEC", "TEAM_LEAD", "FINANCE", "STAFF"],
+    "rbacNote": "역할-권한 매핑은 관리자 화면에서 실시간 변경(동적 권한) · 행 단위 데이터 권한은 Phase 2 (MG1005)"
+  },
+
+  "insights": {
+    "clarityScore": 58,
+    "ambiguousCount": 12,
+    "missingCount": 16,
+    "ambiguous": [
+      { "id": "§7 #1", "item": "외부 판매 플랫폼 목록·API 제공 여부", "interpA": "공식 API 제공 플랫폼 소수(1~3개) → API 자동 수집 가능", "interpB": "API 미제공·판매자센터만 존재 → 엑셀 업로드 또는 Playwright 크롤링, 5개+면 공수 급증", "impact": "일정 ±3주", "ourAnswer": "3~4주차 PoC 선검증 · 그 전까지 엑셀 기준선 고정" },
+      { "id": "§7 #2", "item": "부분환불 시 정산 재계산 규칙", "interpA": "매출만 환불액 차감 · 외주비는 작업 수행 여부로 별도 판단", "interpB": "환불 비율에 비례해 외주비·수수료·손익까지 일괄 재계산", "impact": "정산 재개발 +2주", "ourAnswer": "판정 함수 교체형 설계 — 실사례 5~10건으로 1주차 확정" },
+      { "id": "§7 #4", "item": "\"자동 롤백\"의 정확한 의미", "interpA": "승인된 수정/환불을 주문·정산에 소급 반영(재계산)", "interpB": "A + 이미 반영된 결재를 취소하고 이전 상태로 복원하는 역처리 포함 (+1~2주)", "impact": "데이터 모델 근본 구조", "ourAnswer": "이벤트 원장 — A/B 모두 수용 (B는 반대 부호 이벤트)" }
+    ],
+    "missing": [
+      { "item": "기존 엑셀 데이터 마이그레이션 범위", "why": "§8.1 — 과거 주문/정산/프리랜서 데이터 이관 기간·범위 무언급. 오픈 시 초기 데이터 적재는 사실상 필수 (+1~2주)" },
+      { "item": "백업·장애 대응 (RTO/RPO)", "why": "§8.3 — 백업 주기·복구 목표·장애 대응 절차 무언급. 금액 데이터 시스템에서 치명적 누락" },
+      { "item": "프리랜서 개인정보 보호", "why": "§8.5 — 계좌번호·연락처·주민등록번호성 정보를 다루는데 '환경변수 분리'만 언급. 암호화·마스킹·접근 분리 필수" },
+      { "item": "검수 기준·하자보수 기간", "why": "§8.2 — 검수 시나리오·완료 판정 기준·하자보수 기간 없음 → 검수 확인서 기준 계약서 명시 필요" },
+      { "item": "동시 사용자 규모·성능 목표", "why": "§8.2 — 임직원 수·동시 접속·월 주문 건수 무언급 → 인프라 사이징·월 클라우드 비용 산정 불가" }
+    ]
+  },
+
+  "preQna": {
+    "label": "사전 질문 답변",
+    "title": "주신 질문에 먼저 답합니다",
+    "note": "발주자 사전 검증 질문 3건에 실제 근거로 답변 — 과장 없이 실적만 기재 (→ 사용자 마일스톤 문서 §16.2~§16.4)",
+    "items": [
+      {
+        "id": "PQ1",
+        "question": "결제내역 크롤링이 필요한데 해당 부분도 경험이 있으신가요?",
+        "answer": ["먼저 공식 API 연동 가능 여부를 확인 — 가장 안정적", "없거나 일부만 제공되면 Playwright 브라우저 자동화로 수집", "정책 변경·캡차 리스크 대비 — 실패 로그·재시도·수동 업로드 대체 경로를 함께 설계"],
+        "evidence": "Playwright 실운영 — 위시켓 프로젝트 데이터 3,657건 수집·분석 도구를 직접 구축·운영 중",
+        "source": "§16.3"
+      },
+      {
+        "id": "PQ2",
+        "question": "db설계, 서버설계는 어떻게 하실 예정이실까요?",
+        "answer": ["백엔드 Spring Boot 모듈형 모놀리식 + PostgreSQL", "주문·작업·결재·정산·프리랜서·권한·감사로그를 핵심 도메인으로 분리한 ERD", "환불/재결제/정산은 트랜잭션 단위로 처리", "외부 연동은 3~4주차 PoC로 선검증 (API·로그인·수집 항목)"],
+        "anchor": "#architecture",
+        "anchorLabel": "자세한 설계는 아래 ARCHITECTURE 참조",
+        "source": "§16.2"
+      },
+      {
+        "id": "PQ3",
+        "question": "erp 제작경험이 있나요?",
+        "answer": ["22년 업무 시스템(ERP·금융·관리시스템) 백엔드 개발", "산업은행 EKP 전자결재 시스템 유지보수 — 이 공고 우대사항 \"복잡한 전자 결재 워크플로우 개발 경험\"에 직결", "최근 AI/LLM 기반 업무 자동화 통합"],
+        "philosophy": "ERP는 단순 CRUD가 아니라 업무 흐름과 데이터 정합성이 핵심이라 보고, 주문·배정·결재·환불·정산·손익이 하나의 흐름으로 이어지도록 설계합니다.",
+        "disclaimer": "실제 수행 경험만 기재 — 과장 없음",
+        "source": "§16.4"
+      }
+    ]
+  },
+
+  "questions": {
+    "totalInFullDoc": { "required": 8, "important": 8, "optional": 1 },
+    "note": "전체 질의서 17건 중 핵심 10건 — \"미확인/모름\"도 유효한 답변이며, 그 경우 엑셀 업로드 기준선으로 견적 고정",
+    "items": [
+      { "id": "Q1", "priority": "🔴 필수", "text": "외부 판매 플랫폼의 목록·개수와 각 플랫폼의 공식 API 제공 여부는?", "options": "A) REST API + OAuth 등 공식 API 제공 / B) 판매자센터 로그인 + 엑셀 다운로드만 / C) 없음·미확인 — 플랫폼별 A/B/C 표기 요청", "impact": "자동화/수동화 범위 전체와 주문 소스 ERD 결정. 무리한 전 플랫폼 자동화 시 일정 +3주 이상. 3~4주차 PoC 대상 선정에 직결." },
+      { "id": "Q2", "priority": "🔴 필수", "text": "플랫폼 결제 내역(결제·수수료·환불·재결제)은 어떤 방식으로 확보 가능한가요?", "options": "A) 정산 API 제공 / B) 판매자센터 정산 엑셀 다운로드 / C) 미확인", "impact": "정산 모듈 테이블 설계(수수료·환불 필드)의 전제. 확인 지연 시 11~12주차 정산 개발에서 ERD 재작업 위험 +2주." },
+      { "id": "Q3", "priority": "🔴 필수", "text": "부분환불 발생 시 재계산 범위는 어디까지인가요?", "options": "A) 매출만 환불액 차감, 외주비는 작업 수행 여부로 별도 판단 / B) 환불 비율에 비례해 외주비·플랫폼 수수료·손익까지 일괄 재계산", "impact": "정산 엔진 핵심 알고리즘. 착수 후 변경 시 정산 재개발 +2주. 실제 환불 사례 2~3건과 함께 답변 요청 (Q14 연계)." },
+      { "id": "Q4", "priority": "🔴 필수", "text": "\"결재 승인 완료 시 자동 롤백 및 업데이트\"는 어느 쪽 의미인가요?", "options": "A) 승인된 수정/환불 내용을 주문·매출·정산에 소급 반영(재계산) / B) A + 이미 반영된 결재를 취소하고 이전 상태로 복원하는 역처리 기능까지 포함", "impact": "이벤트 원장 설계로 A/B 모두 수용 가능하나, B는 취소 결재 UI + 역방향 보상 이벤트가 추가 범위 +1~2주." },
+      { "id": "Q5", "priority": "🔴 필수", "text": "결재 승인선 구조는 어떻게 되나요? (고정 vs 조건부)", "options": "A) 결재 유형별 고정 승인선 (예: 환불 = 팀장→재무→대표) / B) 금액 구간·부서·주문 유형 조건부 승인선 + 대결(위임)/전결 필요", "impact": "결재 엔진 복잡도 2~3배 차이. 설정형 결재선으로 설계하되 B 전체를 1차 반영 시 +2주. 대결/전결은 필요 여부만 우선 확인." },
+      { "id": "Q6", "priority": "🔴 필수", "text": "프리랜서/인플루언서가 시스템에 로그인하나요?", "options": "A) 아니오 — 내부 임직원 전용, 프리랜서는 관리 대상 데이터 / B) 예 — 작업 확인·지급 명세서 조회용 외부 포털 필요", "impact": "B면 사용자 수·권한 체계·화면·개인정보 접점이 대폭 증가 +3~4주 → 1차 범위 제외 후 Phase 2 분리 권고." },
+      { "id": "Q10", "priority": "🔴 필수", "text": "전자세금계산서 발행 벤더와 인증 상태는 어떻게 되나요?", "options": "A) 이미 사용 중인 ASP 있음 (팝빌·바로빌 등 — 벤더명 회신 요청) / B) 미선정 — 홈택스 직접 발행 중", "impact": "B면 벤더 선정·계약·사업자 인증서 절차의 대기 시간 발생. 1차는 발행 요청/상태 관리까지, 완전 자동 발행은 2차 권고. 벤더 이용료 부담 주체도 확인." },
+      { "id": "Q14", "priority": "🔴 필수", "text": "현재 엑셀 양식 전체 + 실제 주문/부분환불/재결제/정산 사례 5~10건을 계약 후 1주 내 제공 가능한가요?", "options": "A) 예 — 1주 내 제공 (개인정보 마스킹 가능) / B) 준비 필요 — 제공 가능 시점 회신 (N주)", "impact": "정산 로직·\"자동 롤백\" 정의 검증의 유일한 근거 데이터. 지연되면 1개월 차 기획/디자인 완료 마일스톤이 그대로 밀림 (일정 1:1 지연)." },
+      { "id": "Q11", "priority": "🟡 중요", "text": "공식 API가 없는 플랫폼에 대해 판매자 계정 제공 + 브라우저 자동화(Playwright 크롤링)를 수용하시나요?", "options": "A) 예 — 계정 제공, 약관·차단 리스크 인지·수용 (실패 시 엑셀 대체 경로 상시 유지) / B) 아니오 — 해당 플랫폼은 엑셀 업로드로 운영", "impact": "크롤링 워커(Node.js Playwright) 포함 여부. A여도 1차는 안정성 검증된 1~2개 플랫폼만 — 화면 변경·캡차 운영 리스크는 잔존." },
+      { "id": "Q16", "priority": "🟡 중요", "text": "검수 완료 판정 기준과 하자보수 기간을 계약서에 명시하는 방식에 동의하시나요?", "options": "A) 예 — 15주차 통합 테스트 시나리오(주문→배정→결재→정산→대시보드) 통과를 검수 기준으로 하고 무상 하자보수 N개월 명시 / B) 자체 검수 기준 별도 보유 (공유 요청)", "impact": "검수 기준 부재 시 오픈 지연·분쟁 리스크. 14주차 기능 개발 Freeze(신규 요구는 Phase 2 백로그) 원칙도 함께 합의." }
+    ]
+  },
+
+  "risks": {
+    "scale": "확률·영향 1~5 · 점수 = 확률×영향 (최대 25)",
+    "grading": { "critical": "15+", "high": "10~14", "managed": "≤9" },
+    "message": "이 프로젝트의 리스크는 기술 난이도보다 \"미확정 상태로 개발에 진입하는 것\" 자체에 몰려 있다 — 전부 착수 전~4주차에 해소 가능",
+    "items": [
+      { "id": "R1", "name": "기획 아이디어 단계 + 정산 정책 미확정 — 샘플 미확보 시 정산 모듈 재개발", "cat": "범위", "prob": 4, "impact": 5, "score": 20, "grade": "Critical", "strategy": "회피 — 착수 첫 주 실제 사례 5~10건 확보, 2주차 프로토타입 컨펌으로 범위 고정" },
+      { "id": "R2", "name": "\"풀스펙 자동화\" 기대 vs Phase 1 범위 — 무상 범위 확장 압력", "cat": "범위", "prob": 4, "impact": 4, "score": 16, "grade": "Critical", "strategy": "완화 — 자동화/수동화 구분표를 계약 문서에 첨부해 기대치 공식 단계화" },
+      { "id": "R3", "name": "숨은 범위 편입 (프리랜서 포털·마이그레이션·알림 채널·검색/다운로드)", "cat": "범위", "prob": 3, "impact": 3, "score": 9, "grade": "Medium", "strategy": "완화 — 질의서 17건 + 1차 범위표로 견적 전 확정" },
+      { "id": "R4", "name": "\"자동 롤백\" 의미·승인선 구조 미확정 → 결재 엔진 재작업", "cat": "범위", "prob": 3, "impact": 4, "score": 12, "grade": "High", "strategy": "완화 — 이벤트 원장(ADR-002) + 설정형 승인선(ADR-006)으로 설계 단계에서 흡수" },
+      { "id": "R5", "name": "모바일 앱 요구 추가", "cat": "범위", "prob": 2, "impact": 3, "score": 6, "grade": "Low", "strategy": "회피 — 1차 반응형 웹, 앱은 Phase 3 Capacitor 확장" },
+      { "id": "R6", "name": "외부 판매 플랫폼 API 불확실 → 자동화 실패·정산 데이터 구조 변경", "cat": "기술", "prob": 4, "impact": 4, "score": 16, "grade": "Critical", "strategy": "완화 — 3~4주차 PoC 전진 배치, 확인 전까지 엑셀 업로드 기준선 고정" },
+      { "id": "R7", "name": "크롤링 차단·화면 변경 → 수집 중단/운영 장애", "cat": "기술", "prob": 3, "impact": 3, "score": 9, "grade": "Medium", "strategy": "완화+수용 — Playwright 워커 프로세스 분리(ADR-005), 실패 시 엑셀 대체 경로 상시 유지" },
+      { "id": "R8", "name": "결재 승인 7연쇄·정산 재계산 정합성 결함", "cat": "기술", "prob": 2, "impact": 5, "score": 10, "grade": "High", "strategy": "완화 — 단일 @Transactional 커밋(ADR-003) + ChainIntegrationTest + 실사례 금액 재현 검증" },
+      { "id": "R9", "name": "동적 권한 복잡도 증가 → 개발 지연", "cat": "기술", "prob": 3, "impact": 3, "score": 9, "grade": "Medium", "strategy": "완화 — 1차 역할 기반(RBAC), 행 단위 데이터 권한은 Phase 2" },
+      { "id": "R10", "name": "전자세금계산서 벤더 미선정·인증 지연", "cat": "기술", "prob": 3, "impact": 2, "score": 6, "grade": "Low", "strategy": "전가+완화 — 1차는 발행 요청/상태 관리 범위, ASP 선정·인증은 조기 협의" },
+      { "id": "R11", "name": "AI 파싱 정확도 → 잘못된 데이터 반영", "cat": "기술", "prob": 2, "impact": 3, "score": 6, "grade": "Low", "strategy": "완화 — 후보 데이터 저장 + 담당자 검수 후 반영(ADR-004), 금액 즉시 반영 금지" },
+      { "id": "R12", "name": "개인정보 보호 미비·외부 전송 (계좌·주민번호성 정보)", "cat": "기술", "prob": 3, "impact": 4, "score": 12, "grade": "High", "strategy": "완화 — 암호화 저장·마스킹·접근 권한 분리를 Phase 1 설계에 내재화" },
+      { "id": "R13", "name": "14주차 기능 Freeze 붕괴 — 후반 신규 기능 요구", "cat": "일정", "prob": 4, "impact": 4, "score": 16, "grade": "Critical", "strategy": "회피 — 제안 단계 Freeze 선언 + 신규 요구 Phase 2 백로그 분리 + CR 절차" },
+      { "id": "R14", "name": "클라이언트 자료 제공·정책 의사결정 지연", "cat": "일정", "prob": 3, "impact": 4, "score": 12, "grade": "High", "strategy": "완화 — 주 1회 정기 미팅을 의사결정 기한 관리 장치로, 지연 시 일정 1:1 순연 명시" },
+      { "id": "R15", "name": "대시보드 지표 요구 증가 → 일정 초과", "cat": "일정", "prob": 3, "impact": 3, "score": 9, "grade": "Medium", "strategy": "완화 — 1차는 직접비 기준 Group By 통계로 제한 합의, 고급 BI는 Phase 2" },
+      { "id": "R16", "name": "비전문가 용어·기대치 격차 (\"실시간\"·\"자동 롤백\"·\"풀스펙\")", "cat": "커뮤니케이션", "prob": 3, "impact": 3, "score": 9, "grade": "Medium", "strategy": "완화 — 용어 정의표 + 2주차 프로토타입 시연으로 기대치 조기 정렬" },
+      { "id": "R17", "name": "검수 기준·하자보수 범위 미정의 → 검수 장기화·잔금 지연", "cat": "커뮤니케이션", "prob": 3, "impact": 4, "score": 12, "grade": "High", "strategy": "회피 — 15주차 통합 테스트 시나리오를 검수 기준으로 계약서에 명시, 무상 하자보수 기간 합의" }
+    ],
+    "focus": {
+      "critical": ["R1", "R2", "R6", "R13"],
+      "tailRisk": { "id": "R8", "note": "확률 하 × 영향 최상 — 확률이 낮은 이유는 아키텍처가 처음부터 이를 위해 선택되었기 때문" }
+    }
+  },
+
+  "architecture": {
+    "pattern": "모듈형 모놀리식 — 단일 배포 단위 안에서 12개 모듈 경계 유지 · 7연쇄는 단일 트랜잭션으로 보증",
+    "modules": ["auth", "org", "order", "work", "approval", "settlement", "freelancer", "integration", "notification", "audit", "dashboard", "ai-automation (Phase 2+)"],
+    "techStack": [
+      { "layer": "언어(백엔드)", "choice": "Java 21 (LTS)", "why": "BigDecimal 금액 계산 · 성숙한 트랜잭션/보안 생태계 · 국내 ERP 인력 수급" },
+      { "layer": "프레임워크", "choice": "Spring Boot 3.x", "why": "@Transactional 7연쇄 원자성 · Spring Security RBAC · Scheduler/Batch 내장" },
+      { "layer": "프론트엔드", "choice": "React 18 + TypeScript", "why": "칸반·결재·대시보드 상호작용 화면 다수 · 도메인 모델(domain/*.ts) 타입 공유" },
+      { "layer": "DB", "choice": "PostgreSQL 15+", "why": "JSONB(감사 로그·오류 행) · 파티셔닝 여지 · RDS/NCP 매니지드" },
+      { "layer": "ORM", "choice": "Spring Data JPA + QueryDSL", "why": "낙관적 잠금(@Version) 내장 · 복잡 집계는 네이티브" },
+      { "layer": "인증", "choice": "Spring Security + JWT", "why": "무상태 API · 액세스 30분 + 리프레시 14일 · 역할 기반 인가" },
+      { "layer": "크롤링/RPA", "choice": "Node.js 20 + Playwright", "why": "브라우저 자동화 생태계 우위 · 별도 프로세스 격리 (ADR-005)" },
+      { "layer": "캐시", "choice": "1차 없음 (필요 시 Caffeine)", "why": "사용자 수십 명 규모 — Redis는 과설계 (정직한 사이징)" },
+      { "layer": "배포/CI", "choice": "Docker + AWS/NCP · GitHub Actions", "why": "공고 요구(클라우드 컨테이너) · 환경변수 분리로 사내 이전 대비" }
+    ],
+    "rejectedAlternatives": [
+      "NestJS 풀스택 통일 — 금액 계산 부동소수점 함정, 워커 영역만 채택",
+      "MSA + Kafka — 분산 트랜잭션/사가 필요, 6,000만원/120일 규모에서 운영 비용이 효익을 압도"
+    ],
+    "adrs": [
+      { "id": "ADR-001", "title": "모듈형 모놀리식 (MSA·Kafka·과도한 DDD 배제)", "summary": "7연쇄가 서비스 경계를 넘으면 분산 트랜잭션/사가 필요 — 모놀리식 + @Transactional이 원자성을 가장 값싸게 보증. 12개 모듈 패키지 경계는 유지." },
+      { "id": "ADR-002", "title": "환불/재결제는 덮어쓰기가 아니라 이벤트 기록 (매출 원장)", "summary": "original_amount 불변 · 부호 이벤트 적재 · 매출은 항상 합산. \"자동 롤백\"의 A/B 해석 모두 수용 — 어느 시점 매출도 재현 가능." },
+      { "id": "ADR-003", "title": "재무 반영은 결재 최종 승인 후에만 — 7연쇄 단일 TX + 알림 분리", "summary": "기안 시점 재무 무변경. 연쇄 1~6 단일 트랜잭션, 연쇄 7(알림)은 커밋 후 비동기 + 재시도 3회. 동시 승인은 낙관적 잠금으로 차단." },
+      { "id": "ADR-004", "title": "AI 파싱 결과는 후보 데이터로 저장, 담당자 검수 후 반영", "summary": "Phase 2+ LLM 파싱은 ai_parse_results(후보)에만 적재 — 검수·승인 후 본 테이블 반영. 개인정보 마스킹 후 외부 전송." },
+      { "id": "ADR-005", "title": "크롤링/RPA는 Node.js Playwright 워커로 분리", "summary": "크롤링 불안정성을 프로세스 경계로 격리. 워커 장애가 ERP 가용성에 무영향 · 실패 시 엑셀 대체 경로 상시 유지 · 3~4주차 PoC 선검증." },
+      { "id": "ADR-006", "title": "승인선은 설정 데이터로 관리 (하드코딩 금지)", "summary": "approval_line_rules(결재 유형 × 금액 구간 → 승인 역할)를 설정 테이블로. 정책 변경 = 데이터 수정. 대결/전결은 범위 제외 명시." },
+      { "id": "ADR-007", "title": "단가 스냅샷 + 정산 확정 후 조정 이벤트", "summary": "배정 시점 단가를 rate_snapshot으로 고정. 정산은 DRAFT→CONFIRMED→PAID 상태기계 — 확정 후 변경은 결재 승인 경유 조정 이벤트로만." },
+      { "id": "ADR-008", "title": "외부 수집 원본은 import batch 단위로 보관 (원본/가공 분리)", "summary": "엑셀/API/크롤링 유입은 전부 import_batches를 거쳐 orders로 변환 — 정산 분쟁·재처리의 증거. \"이 주문이 어디서 왔는가\"에 항상 답한다." }
+    ],
+    "apiCount": 33,
+    "apiHighlight": { "method": "POST", "path": "/api/approvals/{id}/decision", "note": "승인/반려 — 7연쇄의 진입점", "errorContract": "403 승인 권한 없음 · 409 version 불일치(동시 승인) · 422 환불 누계 초과 · 500 연쇄 실패 — \"데이터는 변경되지 않았습니다\" (전체 롤백)" },
+    "archRationale": {
+      "coreDecision": "메인 ERP 백엔드는 Spring Boot 모듈형 모놀리식으로 안정적으로 구축하고, 결제내역 수집·크롤링처럼 브라우저 자동화가 필요한 영역은 Node.js Playwright 워커로 분리한다. 공식 API가 있는 기능은 API 연동을 우선하고, 없거나 불안정한 기능은 엑셀 업로드·반자동 수집으로 1차 구현한 뒤 운영 안정성과 비용 대비 효과를 기준으로 자동화 범위를 단계적으로 확장한다.",
+      "source": "사용자 마일스톤 문서 §3 핵심 판단",
+      "options": [
+        { "verdict": "adopt", "mark": "✅", "name": "Spring Boot 모듈형 모놀리식", "role": "채택 — 메인 ERP 백엔드", "reasons": ["@Transactional 단일 커밋 — 7연쇄 정합성 구조적 보증", "BigDecimal 금액 계산 · Spring Security 권한", "국내 SI 인력 수급 · 단일 커밋 정합성"] },
+        { "verdict": "worker-only", "mark": "⚠️", "name": "Node.js 풀스택 통일", "role": "워커로만 채택", "reasons": ["개발 속도·크롤링 생태계(Playwright)는 강점", "금액 계산·트랜잭션은 더 많은 주의 필요", "구조 편차 리스크 → 수집 워커에 적임"] },
+        { "verdict": "reject", "mark": "❌", "name": "MSA (Kafka·CQRS)", "role": "의도적 배제", "reasons": ["120일·6,000만원에 분산 트랜잭션은 과설계", "사가·CQRS는 정합성 검증 비용 급증", "소규모 팀 운영 인력 요구 과다 — 정합성 리스크↑"] }
+      ],
+      "rightToolDiagram": {
+        "caption": "적재적소 — vs가 아니라 역할 분담",
+        "core": { "name": "Spring Boot 코어", "role": "주문·결재·정산 — 단일 트랜잭션으로 금액 정합성 보증" },
+        "worker": { "name": "Node.js Playwright 워커", "role": "외부 수집 — 별도 컨테이너·장애 격리·원본 import batch 보관" }
+      },
+      "dbPrinciples": [
+        "원본/가공 데이터 분리",
+        "환불은 이벤트 기록 (덮어쓰기 금지)",
+        "정산 재계산 이력 저장",
+        "결재 승인 후에만 재무 반영",
+        "AI 결과는 검수 후 반영",
+        "import batch 원본 보관",
+        "전 변경 감사 로그"
+      ]
+    }
+  },
+
+  "timeline": {
+    "totalWeeks": 17,
+    "phases": [
+      { "id": "P1", "name": "설계·기반", "weeks": "W0~6" },
+      { "id": "P2", "name": "주문·결재", "weeks": "W7~10" },
+      { "id": "P3", "name": "정산·연동", "weeks": "W11~13" },
+      { "id": "P4", "name": "검증·오픈", "weeks": "W14~17" }
+    ],
+    "weeks": [
+      { "week": "0", "phase": "P1", "work": "범위 확정, 엑셀 양식·실제 사례 5~10건·플랫폼 목록 확보", "deliverable": "1차 범위표, 자동화/수동화 구분표, Phase 범위표", "check": "클라이언트 서면 합의" },
+      { "week": "1", "phase": "P1", "work": "업무 흐름·정산/승인선 정책 확정 인터뷰", "deliverable": "요구사항 정의서 초안, 승인선 규칙 정의서", "check": "부분환불 정산 규칙(§7 #2) 답 확보" },
+      { "week": "2", "phase": "P1", "work": "IA + AI 화면 프로토타입 20종 시연", "deliverable": "화면 설계서, 프로토타입, 고객 컨펌 기록", "check": "핵심 화면 컨펌 완료" },
+      { "week": "3", "phase": "P1", "work": "DB/아키텍처 설계 + 외부 연동 PoC 착수 (전진 배치)", "deliverable": "ERD, 테이블 정의서, API 초안", "check": "PoC로 데이터 구조·로그인 가능성 검증" },
+      { "week": "4", "phase": "P1", "work": "개발 기반 구축, CRUD 보일러플레이트, PoC 결과 ERD 반영", "deliverable": "개발 환경, CI/CD, 배포 스켈레톤, PoC 결과서", "check": "docker-compose 기동, 샘플 CRUD 동작" },
+      { "week": "5~6", "phase": "P1", "work": "공통/권한/감사 로그 개발", "deliverable": "로그인, RBAC, 조직 관리, audit AOP", "check": "역할별 메뉴 제어 + 변경 이력 저장" },
+      { "week": "7~8", "phase": "P2", "work": "주문(수기/엑셀)·그룹·배정·칸반", "deliverable": "주문/작업 모듈", "check": "엑셀 업로드→배정→칸반 관통, 오류 행 분리" },
+      { "week": "9~10", "phase": "P2", "work": "전자결재: 기안·승인선·다단계 승인·7연쇄", "deliverable": "결재 모듈 + ChainIntegrationTest", "check": "환불 승인→매출·정산 반영, 반려 무변경" },
+      { "week": "11~12", "phase": "P3", "work": "정산: 결제내역·매출/외주비 재계산·확정·지급명세서·손익", "deliverable": "정산 모듈, 손익 뷰", "check": "실제 사례 재현 계산 일치 (BigDecimal 검증)" },
+      { "week": "12~13", "phase": "P3", "work": "외부 연동 제품화(PoC 검증분)·세금계산서 요청/상태·워커", "deliverable": "integration 모듈, worker", "check": "수집 실패 시 엑셀 대체 경로 동작" },
+      { "week": "14", "phase": "P4", "work": "기능 Freeze, 마이그레이션 테스트, 단순 대시보드 마감", "deliverable": "Freeze 선언문, 마이그레이션 리허설 결과", "check": "신규 요건 백로그 분리 확인", "freeze": true },
+      { "week": "15", "phase": "P4", "work": "통합 테스트 (12단계 시나리오 + 필수 케이스 10종)", "deliverable": "테스트 결과서", "check": "부분환불/전체환불/재결제/반려/확정 후 수정/중복 업로드/권한 우회 전건 통과" },
+      { "week": "16", "phase": "P4", "work": "사용자 검수·교육·매뉴얼", "deliverable": "사용자/관리자 매뉴얼, 검수 확인서, Phase 2 제안서", "check": "검수 확인서 서명" },
+      { "week": "17", "phase": "P4", "work": "운영 배포·초기 데이터 이관·안정화", "deliverable": "운영 시스템, 백업/모니터링, 소스코드 인도", "check": "핵심 플로우 실데이터 동작 + 산출물 5종 인도" }
+    ],
+    "milestones": [
+      { "id": "M1", "label": "요구 확정 + 화면 컨펌", "week": 2, "criteria": "프로토타입 20종 시연·컨펌 기록, 정산/승인선 정책 문서화 — 공고 \"1개월 차 기획/디자인 완료\" 선행 달성" },
+      { "id": "M2", "label": "설계 확정 + 연동 PoC", "week": 4, "criteria": "ERD·테이블 정의서, API 설계, PoC 결과서 — 정산 테이블이 실데이터 구조로 검증됨" },
+      { "id": "M3", "label": "공통/권한/주문/작업 완료", "week": 8, "criteria": "RBAC·감사 로그·엑셀 업로드·배정·칸반 동작" },
+      { "id": "M4", "label": "결재·정산 완료 (7연쇄)", "week": 12, "criteria": "환불 승인 7연쇄 통합 테스트 통과, 실제 사례 금액 재현 일치 — 공고 \"3개월 차 핵심 개발 및 연동 완료\" 대응" },
+      { "id": "M5", "label": "기능 Freeze + 통합 테스트 통과", "week": 15, "criteria": "필수 테스트 케이스 전건 통과, 마이그레이션 리허설 완료" },
+      { "id": "M6", "label": "검수·오픈", "week": 17, "criteria": "검수 확인서, 운영 배포, 매뉴얼·소스코드 등 산출물 5종 인도 — 공고 \"4개월 차 통합 테스트 및 이관\" 대응" }
+    ]
+  },
+
+  "whyUs": {
+    "leadCard": {
+      "title": "산업은행 EKP 전자결재 시스템 유지보수",
+      "note": "우대사항 \"복잡한 전자 결재 워크플로우 개발 경험\"의 대규모 실무 근거 — 승인선·문서 상태기계·감사 추적을 이미 운영해 본 도메인",
+      "profile": ["22년 Java/Spring Boot 백엔드 · 32+ 프로젝트", "ERP·금융·관리자 시스템 다수", "AI/LLM 통합 — 판례 8만 건 RAG · 업무 자동화", "크롤링·데이터 수집 도구 운영 (Playwright)"]
+    },
+    "closing": "이 프로젝트의 진짜 난이도는 화면 수가 아니라 환불 승인의 7단계 연쇄 처리 — 저는 그걸 알고 시작합니다.",
+    "comparison": [
+      { "title": "정합성 중심 설계", "ours": "이벤트 원장 + 7연쇄 TX + 감사 로그 — ADR 8건 완료", "others": "화면 목록 중심 견적" },
+      { "title": "전자결재 실무 경험", "ours": "산업은행 EKP 유지보수 (우대사항 직결)", "others": "결재 경험 불명" },
+      { "title": "레퍼런스 UI + 동작 프로토타입 선제작", "ours": "이 페이지 + 클릭 가능한 관리자 콘솔 9화면 (주문·작업·결재·정산·HR·권한)", "others": "텍스트 지원서" },
+      { "title": "자동화/수동화 분리 제안 (공고 직접 요구)", "ours": "업무 9종 구분표 + 3~4주차 PoC 로드맵", "others": "\"전부 자동화 가능\" 낙관" },
+      { "title": "AI 래피드 프로토타이핑", "ours": "2주차 실브라우저 화면 컨펌 → 재작업 최소화", "others": "문서형 와이어프레임" },
+      { "title": "AI/LLM 통합 역량 (Phase 2 대비)", "ours": "RAG·API 자동화 검증된 실행력 (ADR-004)", "others": "—" },
+      { "title": "일정 방어 체계", "ours": "14주차 Freeze + 리스크 17건 사전 식별·대응", "others": "일정표만 제출" }
+    ]
+  },
+
+  "cta": {
+    "headline": "범위 정리 미팅을 제안합니다",
+    "tone": "기술 검토 미팅 환영 — ADR·도메인 코드·API 설계 화면 공유 리뷰 가능",
+    "kickoffPacket": [
+      "주문·환불·재결제·정산 실제 사례 5~10건 (개인정보 마스킹 가능) — 정산 로직 확정의 유일한 근거",
+      "현재 사용 중인 엑셀 관리 양식 전체 + 업무 프로세스 흐름도",
+      "판매 플랫폼 목록 — API 제공 여부 확인용 (3~4주차 PoC 대상 선정)"
+    ],
+    "meetingAgenda": ["질의 10건 정리", "자동화/수동화 구분표 합의", "ADR·코드 리뷰 가능", "14주차 Freeze 원칙 합의"],
+    "roiCalculator": { "sliderLabel": "월 환불·재결제·정산 조정 건수", "default": 10, "minutesPerCase": 20, "hourlyWage": 50000, "note": "월 건수 × 12개월 × 20분/건 → 연간 절감 시간 · 인건비 환산" },
+    "links": {
+      "liveDemo": "../proto/index.html",
+      "autoDemo": "../demo/자동시연.html",
+      "pt": "../pt/index.html",
+      "nonit": "./nonit.html",
+      "landing": "./index.html"
+    }
+  },
+
+  "footer": {
+    "publicUrl": "https://meleteyo.github.io/refui-156767/it.html",
+    "lastUpdated": "2026-07-10",
+    "generator": "wishket-refui",
+    "disclaimer": "본 UI는 위시켓 #156767 제안서 참고용이며 실제 서비스가 아닙니다. 모든 고객사명·금액·지표는 가상의 데모 데이터입니다."
+  }
+}

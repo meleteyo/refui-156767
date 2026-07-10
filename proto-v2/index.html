@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>콘텐츠/마케팅 대행사 맞춤형 통합 ERP — 라이브 프로토타입 v2 (#156767)</title>
+  <meta name="description" content="콘텐츠/마케팅 대행사 맞춤형 통합 ERP 구축 클릭 가능한 관리자 콘솔 프로토타입 v2 — 22화면 풀 메뉴 트리" />
+
+  <!-- Pretendard (한글 최적화) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CDN (JIT) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Pretendard Variable"', 'Pretendard', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'SF Mono', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- React 18 + Babel (proto 트랙 전용) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    html, body {
+      font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+      background: #020617;
+      color: #f1f5f9;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    .font-mono, code, .tabular { font-family: 'JetBrains Mono', monospace; }
+
+    /* ⚠️ Aurora opacity ≤ 0.10 (proto 가독성) */
+    .aurora-bg {
+      position: fixed; inset: 0; z-index: -10; background: #020617;
+    }
+    .aurora-bg::before {
+      content: ''; position: absolute; inset: 0; opacity: 0.08;
+      background:
+        radial-gradient(at 15% 25%, rgba(139,92,246,0.4), transparent 50%),
+        radial-gradient(at 85% 75%, rgba(16,185,129,0.3), transparent 50%);
+    }
+
+    /* 화면 전환 fade-in (§3.1) — 셸이 .scr로 처리, 화면 파일은 신경 쓰지 않는다 */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+    .scr { animation: fadeUp 0.32s ease-out; }
+
+    /* SidePanel 슬라이드 인 (components.jsx SidePanel이 사용) */
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateX(24px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scr, [style*="panelIn"], [style*="fadeUp"] { animation: none !important; }
+    }
+
+    ::-webkit-scrollbar { width: 9px; height: 9px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.25); border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.45); }
+    ::selection { background: rgba(139,92,246,0.45); color: #fff; }
+
+    /* 모바일 가드 (§6.3) */
+    .mobile-guard { display: none; }
+    @media (max-width: 1023px) {
+      .mobile-guard {
+        display: flex; position: fixed; inset: 0; z-index: 100;
+        background: rgba(2,6,23,0.95); backdrop-filter: blur(20px);
+        align-items: center; justify-content: center; padding: 2rem; text-align: center;
+      }
+      .app-root { filter: blur(4px); pointer-events: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="aurora-bg" aria-hidden="true"></div>
+
+  <!-- 데이터 + 공통 컴포넌트 (순서 중요: data → components → tweaks → 화면들) -->
+  <script src="./data.js"></script>
+  <script type="text/babel" src="./components.jsx"></script>
+  <script type="text/babel" src="./tweaks-panel.jsx"></script>
+
+  <!-- 22 화면 — 파일이 아직 없으면 콘솔 로드 오류만 나고, 렌더 시점에 Placeholder로 대체된다 -->
+  <script type="text/babel" src="./home.jsx"></script>
+  <script type="text/babel" src="./notifications.jsx"></script>
+  <script type="text/babel" src="./profit.jsx"></script>
+  <script type="text/babel" src="./order-list.jsx"></script>
+  <script type="text/babel" src="./order-form.jsx"></script>
+  <script type="text/babel" src="./excel-import.jsx"></script>
+  <script type="text/babel" src="./work-groups.jsx"></script>
+  <script type="text/babel" src="./assign.jsx"></script>
+  <script type="text/babel" src="./kanban.jsx"></script>
+  <script type="text/babel" src="./draft.jsx"></script>
+  <script type="text/babel" src="./inbox.jsx"></script>
+  <script type="text/babel" src="./approval-detail.jsx"></script>
+  <script type="text/babel" src="./payment-import.jsx"></script>
+  <script type="text/babel" src="./settlement-confirm.jsx"></script>
+  <script type="text/babel" src="./payout.jsx"></script>
+  <script type="text/babel" src="./tax-invoice.jsx"></script>
+  <script type="text/babel" src="./freelancers.jsx"></script>
+  <script type="text/babel" src="./eval-input.jsx"></script>
+  <script type="text/babel" src="./eval-report.jsx"></script>
+  <script type="text/babel" src="./employees.jsx"></script>
+  <script type="text/babel" src="./permissions.jsx"></script>
+  <script type="text/babel" src="./audit-log.jsx"></script>
+
+  <!-- App shell -->
+  <div id="app-root" class="app-root"></div>
+
+  <!-- 모바일 가드 오버레이 -->
+  <div class="mobile-guard">
+    <div class="rounded-2xl bg-slate-900 border border-slate-700 p-8 max-w-sm">
+      <div class="text-2xl mb-3">🖥</div>
+      <h2 class="text-lg font-bold mb-2">데스크탑에서 열어주세요</h2>
+      <p class="text-sm text-slate-400">
+        본 프로토타입은 1024px 이상 해상도에서 최적화되어 있습니다.<br>
+        <a href="../proto/index.html" class="text-purple-400 underline">v1 프로토타입</a>도 함께 참고해주세요.
+      </p>
+    </div>
+  </div>
+
+  <!-- 데모 데이터 가드 배지 (필수, §6.1-5) -->
+  <div class="fixed bottom-3 left-3 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[10px] text-amber-300 font-medium backdrop-blur-xl">
+    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+    데모 데이터 · 실데이터 미연결
+  </div>
+
+  <!-- 헤더 우측 v2 배지 -->
+  <div class="fixed top-3 right-3 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/40 text-[10px] font-mono font-bold text-purple-200 backdrop-blur-xl">
+    PROTO&nbsp;<span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300">v2</span>&nbsp;· 22 SCREENS
+  </div>
+
+  <!-- App mount -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "brandName": "애드플로우",
+      "brandColor": "#a855f7",
+      "policyMode": "PRIORITY"
+    }/*EDITMODE-END*/;
+
+    // ── 라우트 레지스트리 — 22 화면 (CONTRACT.md와 1:1) ──────────────────
+    // component: window[component]가 있으면 사용, 없으면 Placeholder ("구현 대기")
+    const REGISTRY = {
+      home:           { component: 'Home',              file: 'home.jsx',               label: '홈',               icon: 'home' },
+      notifications:  { component: 'Notifications',     file: 'notifications.jsx',      label: '알림 센터',        icon: 'bell' },
+      profit:         { component: 'Profit',            file: 'profit.jsx',             label: '손익 대시보드',    icon: 'chart' },
+      orders:         { component: 'OrderList',         file: 'order-list.jsx',         label: '주문 목록',        icon: 'file' },
+      orderForm:      { component: 'OrderForm',         file: 'order-form.jsx',         label: '주문 등록',        icon: 'plus' },
+      excelImport:    { component: 'ExcelImport',       file: 'excel-import.jsx',       label: '주문 엑셀 업로드', icon: 'upload' },
+      workGroups:     { component: 'WorkGroups',        file: 'work-groups.jsx',        label: '작업 그룹',        icon: 'layers' },
+      assign:         { component: 'Assign',            file: 'assign.jsx',             label: '작업 배정',        icon: 'users' },
+      kanban:         { component: 'Kanban',            file: 'kanban.jsx',             label: '작업 칸반',        icon: 'columns' },
+      draft:          { component: 'Draft',             file: 'draft.jsx',              label: '기안 작성',        icon: 'edit' },
+      inbox:          { component: 'Inbox',             file: 'inbox.jsx',              label: '결재함',           icon: 'inbox' },
+      approvalDetail: { component: 'ApprovalDetail',    file: 'approval-detail.jsx',    label: '결재 상세',        icon: 'shieldCheck' },
+      paymentImport:  { component: 'PaymentImport',     file: 'payment-import.jsx',     label: '결제내역 등록',    icon: 'creditCard' },
+      settlement:     { component: 'SettlementConfirm', file: 'settlement-confirm.jsx', label: '정산 확정',        icon: 'lock' },
+      payout:         { component: 'Payout',            file: 'payout.jsx',             label: '지급 명세서',      icon: 'wallet' },
+      taxInvoice:     { component: 'TaxInvoice',        file: 'tax-invoice.jsx',        label: '세금계산서',       icon: 'receipt' },
+      freelancers:    { component: 'Freelancers',       file: 'freelancers.jsx',        label: '프리랜서 마스터',  icon: 'user2' },
+      evalInput:      { component: 'EvalInput',         file: 'eval-input.jsx',         label: '평가 입력',        icon: 'star' },
+      evalReport:     { component: 'EvalReport',        file: 'eval-report.jsx',        label: '평가 조회',        icon: 'activity' },
+      employees:      { component: 'Employees',         file: 'employees.jsx',          label: '직원 관리',        icon: 'user' },
+      permissions:    { component: 'Permissions',       file: 'permissions.jsx',        label: '권한 설정',        icon: 'shield' },
+      auditLog:       { component: 'AuditLog',          file: 'audit-log.jsx',          label: '변경 이력',        icon: 'history' },
+    };
+
+    // ── 사이드바 7그룹 메뉴 트리 (설계기준 §3.2) ──────────────────────────
+    const NAV_GROUPS = [
+      { group: '개요 · OVERVIEW',    items: ['home', 'notifications', 'profit'] },
+      { group: '주문 · ORDERS',      items: ['orders', 'orderForm', 'excelImport'] },
+      { group: '작업 · TASKS',       items: ['workGroups', 'assign', 'kanban'] },
+      { group: '결재 · APPROVALS',   items: ['draft', 'inbox', 'approvalDetail'] },
+      { group: '재무 · FINANCE',     items: ['paymentImport', 'settlement', 'payout', 'taxInvoice'] },
+      { group: '리소스 · RESOURCES', items: ['freelancers', 'evalInput', 'evalReport'] },
+      { group: '시스템 · SYSTEM',    items: ['employees', 'permissions', 'auditLog'] },
+    ];
+
+    // ── 구현 대기 플레이스홀더 — 화면 파일이 없어도 앱은 절대 죽지 않는다 ──
+    function Placeholder({ route }) {
+      const meta = REGISTRY[route.name] || { label: route.name, component: '?', file: '?' };
+      return (
+        <div>
+          <window.SectionLabel color="amber">WAITING FOR IMPLEMENTATION</window.SectionLabel>
+          <h1 className="text-2xl font-bold mt-1 mb-6">{meta.label}</h1>
+          <window.Card className="p-8 max-w-2xl">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0">
+                <window.Icon name="clock" className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-bold mb-1">구현 대기 중인 화면입니다</h2>
+                <p className="text-sm text-slate-400 mb-4">
+                  <code className="font-mono text-purple-300">{meta.file}</code> 에서{' '}
+                  <code className="font-mono text-purple-300">window.{meta.component}</code> 를 노출하면
+                  이 자리에 자동으로 연결됩니다. 컴포넌트 시그니처와 데이터 스키마는{' '}
+                  <code className="font-mono text-cyan-300">CONTRACT.md</code> 를 따르세요.
+                </p>
+                <div className="rounded-lg bg-slate-950/70 border border-slate-800 p-3 font-mono text-xs text-slate-400 space-y-1">
+                  <div>route: <span className="text-slate-200">{route.name}</span></div>
+                  <div>payload: <span className="text-slate-200">{JSON.stringify(route.payload)}</span></div>
+                  <div>signature: <span className="text-slate-200">({'{ route, navigate, tweaks }'}) =&gt; JSX</span></div>
+                </div>
+              </div>
+            </div>
+          </window.Card>
+        </div>
+      );
+    }
+
+    function App() {
+      const [tweaks, setTweak] = window.useTweaks(TWEAK_DEFAULTS);
+      const [route, setRoute] = useState({ name: 'home', payload: null });
+
+      // route = { name, payload } — payload는 딥링크 컨텍스트 (P4: 필터 재설정 불요)
+      const navigate = (name, payload) => setRoute({ name, payload: payload || null });
+
+      // demo iframe 호환 — 외부(자동시연 등)에서 window.__navigate(name, payload) 호출 가능
+      useEffect(() => {
+        window.__navigate = (name, payload) => setRoute({ name, payload: payload || null });
+        return () => { delete window.__navigate; };
+      }, []);
+
+      // ── 사이드바 배지 (data.js 기반) ──────────────────────────────────
+      // 알림: 미읽음 건수 / 결재함: '내 차례'(순차 승인선의 첫 PENDING이 나) 건수
+      const unreadCount = NOTIFICATIONS.filter((n) => !n.read).length;
+      const myTurnCount = APPROVALS.filter((a) => {
+        if (a.status !== 'IN_PROGRESS') return false;
+        const next = a.approvalLine.find((s) => s.status === 'PENDING');
+        return next && next.approverId === CURRENT_USER_ID;
+      }).length;
+      const badges = { notifications: unreadCount, inbox: myTurnCount };
+
+      const meta = REGISTRY[route.name] || REGISTRY.home;
+      const Screen = window[meta.component] || Placeholder;
+      const me = EMPLOYEES.find((e) => e.id === CURRENT_USER_ID);
+
+      return (
+        <div className="min-h-screen flex" style={{ '--brand': tweaks.brandColor }}>
+          {/* Sidebar — 솔리드 다크 w-60 (투명도 금지, §3.1) */}
+          <aside className="w-60 shrink-0 bg-slate-950 border-r border-slate-800 p-4 flex flex-col h-screen sticky top-0">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ background: tweaks.brandColor }}>
+                {(tweaks.brandName || 'E')[0]}
+              </div>
+              <div className="min-w-0">
+                <div className="font-bold text-sm truncate flex items-center gap-1.5">
+                  {tweaks.brandName}
+                  <span className="text-[9px] font-mono font-bold px-1 py-px rounded bg-gradient-to-r from-purple-600 to-pink-600 text-white">v2</span>
+                </div>
+                <div className="text-[10px] text-slate-500 font-mono">통합 ERP · #156767</div>
+              </div>
+            </div>
+
+            {/* 유틸리티 행 — 로그인 사용자 컨텍스트 */}
+            <div className="mb-4 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-2">
+              <window.Icon name="user" className="w-3.5 h-3.5 text-slate-500" />
+              <span className="text-xs text-slate-300 truncate">{me ? `${me.name} · ${me.position}` : '게스트'}</span>
+              {me && <window.EnumPill status={me.role} />}
+            </div>
+
+            <nav className="flex-1 space-y-4 overflow-y-auto pr-1">
+              {NAV_GROUPS.map(({ group, items }) => (
+                <div key={group}>
+                  <div className="px-3 mb-1 text-[10px] font-mono uppercase tracking-wider text-slate-600">{group}</div>
+                  <div className="space-y-0.5">
+                    {items.map((key) => {
+                      const item = REGISTRY[key];
+                      const badge = badges[key];
+                      return (
+                        <button key={key} onClick={() => navigate(key)}
+                          className={`w-full flex items-center gap-2 px-3 py-1.5 rounded text-sm transition ${
+                            route.name === key
+                              ? 'bg-slate-800 text-white'
+                              : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                          }`}>
+                          <window.Icon name={item.icon} className="w-4 h-4 shrink-0" />
+                          <span className="flex-1 text-left truncate">{item.label}</span>
+                          {badge > 0 && (
+                            <span className={`shrink-0 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-mono font-bold flex items-center justify-center ${
+                              key === 'inbox' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                            }`}>
+                              {badge}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </nav>
+
+            <div className="pt-3 border-t border-slate-800 space-y-2">
+              <div className="text-[10px] text-slate-600 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                환불 승인 시 7연쇄 자동 반영
+              </div>
+              <a href="../proto/index.html" target="_blank" rel="noopener"
+                 className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-purple-300 transition">
+                <window.Icon name="external" className="w-3 h-3" />
+                v1 프로토타입과 비교 →
+              </a>
+            </div>
+          </aside>
+
+          {/* Main — 화면 전환 fade는 셸(.scr)이 처리 */}
+          <main className="flex-1 overflow-auto" data-screen-label={meta.label}>
+            <div className="scr p-8 max-w-[1440px] mx-auto" key={route.name + ':' + JSON.stringify(route.payload || {})}>
+              <Screen route={route} navigate={navigate} tweaks={tweaks} />
+            </div>
+          </main>
+
+          {/* 토스트 레이어 (IDEA-16 다음 행동 릴레이) — window.toast()로 호출 */}
+          <window.ToastHost />
+
+          {/* Tweaks 패널 — policyMode(순차/병렬)는 결재 화면들의 승인선 렌더에 반영 */}
+          <window.TweaksPanel title="Tweaks">
+            <window.TweakSection label="브랜드" />
+            <window.TweakText label="회사명" value={tweaks.brandName} onChange={(v) => setTweak('brandName', v)} />
+            <window.TweakColor label="브랜드 색" value={tweaks.brandColor} onChange={(v) => setTweak('brandColor', v)} />
+
+            <window.TweakSection label="결재 정책" />
+            <window.TweakRadio
+              label="승인 방식"
+              value={tweaks.policyMode}
+              options={[
+                { value: 'PRIORITY', label: '순차 결재' },
+                { value: 'BROADCAST', label: '병렬 합의' },
+              ]}
+              onChange={(v) => setTweak('policyMode', v)}
+            />
+          </window.TweaksPanel>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('app-root')).render(<App />);
+  </script>
+</body>
+</html>

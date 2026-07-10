@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>콘텐츠/마케팅 대행사 맞춤형 통합 ERP 구축 — 미팅 PT (#156767)</title>
+  <meta name="description" content="위시켓 #156767 콘텐츠/마케팅 대행사 맞춤형 통합 ERP 구축 고객 미팅용 PT 슬라이드 (8장)" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Pretendard Variable"', 'Pretendard', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'SF Mono', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body class="font-sans bg-slate-950 text-slate-100 antialiased overflow-hidden">
+  <div class="aurora-bg" aria-hidden="true"></div>
+
+  <!-- Slide deck container (populated by slides.js) -->
+  <main id="deck" class="deck"></main>
+
+  <!-- Speaker notes panel (toggle with N) -->
+  <aside id="notes" class="notes" aria-hidden="true">
+    <div class="notes-header">
+      <span class="notes-title">발표자 노트</span>
+      <span class="notes-hint">N 키로 닫기</span>
+    </div>
+    <div id="notes-body" class="notes-body"></div>
+  </aside>
+
+  <!-- Grid overview (toggle with Esc) -->
+  <div id="overview" class="overview" aria-hidden="true">
+    <div class="overview-header">
+      <span class="overview-title">슬라이드 개요</span>
+      <span class="overview-hint">클릭하여 이동 · Esc로 닫기</span>
+    </div>
+    <div id="overview-grid" class="overview-grid"></div>
+  </div>
+
+  <!-- Footer: progress + hints + font scaler -->
+  <footer class="deck-footer">
+    <div class="progress">
+      <span id="slide-num" class="slide-num">1 / 8</span>
+      <span class="dot">·</span>
+      <span id="slide-chapter" class="slide-chapter">표지</span>
+    </div>
+    <div class="hints">
+      <kbd>←</kbd><kbd>→</kbd> 또는 클릭
+      <span class="dot">·</span>
+      <kbd>N</kbd> 노트
+      <span class="dot">·</span>
+      <kbd>Esc</kbd> 개요
+      <span class="dot">·</span>
+      <div class="font-scaler" role="group" aria-label="화면 폰트 크기">
+        <button type="button" class="fs-btn" data-scale="1">100%</button>
+        <button type="button" class="fs-btn" data-scale="1.1">110%</button>
+        <button type="button" class="fs-btn" data-scale="1.2">120%</button>
+        <button type="button" class="fs-btn" data-scale="1.3">130%</button>
+        <button type="button" class="fs-btn" data-scale="1.4">140%</button>
+        <button type="button" class="fs-btn" data-scale="1.5">150%</button>
+        <button type="button" class="fs-btn" data-scale="2">200%</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- data + app -->
+  <script src="./data.js"></script>
+  <script src="./slides.js"></script>
+</body>
+</html>

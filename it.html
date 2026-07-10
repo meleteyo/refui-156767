@@ -1,0 +1,2093 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>콘텐츠/마케팅 대행사 맞춤형 통합 ERP 구축 — 레퍼런스 UI (IT)</title>
+  <meta name="description" content="위시켓 #156767 콘텐츠/마케팅 대행사 통합 ERP — 환불 승인 7연쇄 정합성 중심 설계, 17주 실행계획, 리스크 17건 사전 분석. IT 전문가용 레퍼런스 UI." />
+  <meta property="og:title" content="콘텐츠/마케팅 대행사 맞춤형 통합 ERP 구축 — 레퍼런스 UI" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://meleteyo.github.io/refui-156767/it.html" />
+
+  <!-- Tailwind CSS (CDN, JIT) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Pretendard Variable"', 'Pretendard', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'SF Mono', 'Menlo', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Pretendard (한글 최적화) + JetBrains Mono (숫자·코드) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- ⚠️ 주의: gh/orioncactus/pretendard CDN은 폐기됨. 반드시 npm/pretendard 경로 사용. -->
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Prism.js (코드 하이라이트) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-clike.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-typescript.min.js"></script>
+
+  <link rel="stylesheet" href="./styles.css" />
+
+  <style>
+    :root {
+      --project-id: 156767;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+      background: #020617;
+      color: #f1f5f9;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Aurora gradient mesh — 정보 밀도 높은 페이지: opacity ≤ 0.10 */
+    .aurora-bg {
+      position: fixed; inset: 0; z-index: -10;
+      background: #020617;
+    }
+    .aurora-bg::before {
+      content: ''; position: absolute; inset: 0; opacity: 0.10;
+      background:
+        radial-gradient(at 15% 25%, rgba(139,92,246,0.35), transparent 50%),
+        radial-gradient(at 85% 75%, rgba(16,185,129,0.25), transparent 50%),
+        radial-gradient(at 50% 50%, rgba(236,72,153,0.15), transparent 45%),
+        radial-gradient(at 10% 90%, rgba(34,211,238,0.12), transparent 40%);
+    }
+    /* Scroll-driven animations (modern browsers) */
+    @supports (animation-timeline: view()) {
+      .scroll-reveal {
+        animation: slideUp 0.8s ease-out;
+        animation-timeline: view();
+        animation-range: entry 0% cover 30%;
+      }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* 7연쇄 스텝 */
+    .chain-step { position: relative; }
+    .chain-step + .chain-step::before {
+      content: ''; position: absolute; left: 19px; top: -14px;
+      width: 2px; height: 14px; background: rgba(168,85,247,0.35);
+    }
+    /* Freeze 강조 셀 */
+    .freeze-cell {
+      background: repeating-linear-gradient(135deg, rgba(251,191,36,0.16) 0 6px, rgba(251,191,36,0.05) 6px 12px);
+      border: 1px dashed rgba(251,191,36,0.5);
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body data-client-type="it" data-domain="erp">
+  <div class="aurora-bg" aria-hidden="true"></div>
+
+  <!-- REFUI_DATA — client.js 차트 데이터 주입 (trend/allocation/risks) -->
+  <script>
+    window.REFUI_DATA = {
+      trend: {
+        labels: ['2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'],
+        values: [38200000, 41500000, 43900000, 46700000, 48100000, 50300000, 52400000]
+      },
+      allocation: {
+        labels: ['스마트스토어', '쿠팡', '자사몰', '이메일/문의', '수기 등록'],
+        values: [42, 23, 18, 10, 7]
+      },
+      // 6_리스크분석 §1 매트릭스 전 행 (R1~R17, 확률·영향 1~5)
+      risks: [
+        { id: 'R1',  name: '기획 아이디어 단계 + 정산 정책 미확정 — 샘플 미확보 시 정산 모듈 재개발', cat: '범위', prob: 4, impact: 5, score: 20, grade: 'Critical', strategy: '회피 — 착수 첫 주 실제 사례 5~10건 확보, 2주차 프로토타입 컨펌으로 범위 고정' },
+        { id: 'R2',  name: '"풀스펙 자동화" 기대 vs Phase 1 범위 — 무상 범위 확장 압력', cat: '범위', prob: 4, impact: 4, score: 16, grade: 'Critical', strategy: '완화 — 자동화/수동화 구분표를 계약 문서에 첨부해 기대치 공식 단계화' },
+        { id: 'R3',  name: '숨은 범위 편입 (프리랜서 포털·마이그레이션·알림 채널·검색/다운로드)', cat: '범위', prob: 3, impact: 3, score: 9, grade: 'Medium', strategy: '완화 — 질의서 17건 + 1차 범위표로 견적 전 확정' },
+        { id: 'R4',  name: '"자동 롤백" 의미·승인선 구조 미확정 → 결재 엔진 재작업', cat: '범위', prob: 3, impact: 4, score: 12, grade: 'High', strategy: '완화 — 이벤트 원장(ADR-002) + 설정형 승인선(ADR-006)으로 설계 단계에서 흡수' },
+        { id: 'R5',  name: '모바일 앱 요구 추가', cat: '범위', prob: 2, impact: 3, score: 6, grade: 'Low', strategy: '회피 — 1차 반응형 웹, 앱은 Phase 3 Capacitor 확장' },
+        { id: 'R6',  name: '외부 판매 플랫폼 API 불확실 → 자동화 실패·정산 데이터 구조 변경', cat: '기술', prob: 4, impact: 4, score: 16, grade: 'Critical', strategy: '완화 — 3~4주차 PoC 전진 배치, 확인 전까지 엑셀 업로드 기준선 고정' },
+        { id: 'R7',  name: '크롤링 차단·화면 변경 → 수집 중단/운영 장애', cat: '기술', prob: 3, impact: 3, score: 9, grade: 'Medium', strategy: '완화+수용 — Playwright 워커 프로세스 분리(ADR-005), 실패 시 엑셀 대체 경로 상시 유지' },
+        { id: 'R8',  name: '결재 승인 7연쇄·정산 재계산 정합성 결함', cat: '기술', prob: 2, impact: 5, score: 10, grade: 'High', strategy: '완화 — 단일 @Transactional 커밋(ADR-003) + ChainIntegrationTest + 실사례 금액 재현 검증' },
+        { id: 'R9',  name: '동적 권한 복잡도 증가 → 개발 지연', cat: '기술', prob: 3, impact: 3, score: 9, grade: 'Medium', strategy: '완화 — 1차 역할 기반(RBAC), 행 단위 데이터 권한은 Phase 2' },
+        { id: 'R10', name: '전자세금계산서 벤더 미선정·인증 지연', cat: '기술', prob: 3, impact: 2, score: 6, grade: 'Low', strategy: '전가+완화 — 1차는 발행 요청/상태 관리 범위, ASP 선정·인증은 조기 협의' },
+        { id: 'R11', name: 'AI 파싱 정확도 → 잘못된 데이터 반영', cat: '기술', prob: 2, impact: 3, score: 6, grade: 'Low', strategy: '완화 — 후보 데이터 저장 + 담당자 검수 후 반영(ADR-004), 금액 즉시 반영 금지' },
+        { id: 'R12', name: '개인정보 보호 미비·외부 전송 (계좌·주민번호성 정보)', cat: '기술', prob: 3, impact: 4, score: 12, grade: 'High', strategy: '완화 — 암호화 저장·마스킹·접근 권한 분리를 Phase 1 설계에 내재화' },
+        { id: 'R13', name: '14주차 기능 Freeze 붕괴 — 후반 신규 기능 요구', cat: '일정', prob: 4, impact: 4, score: 16, grade: 'Critical', strategy: '회피 — 제안 단계 Freeze 선언 + 신규 요구 Phase 2 백로그 분리 + CR 절차' },
+        { id: 'R14', name: '클라이언트 자료 제공·정책 의사결정 지연', cat: '일정', prob: 3, impact: 4, score: 12, grade: 'High', strategy: '완화 — 주 1회 정기 미팅을 의사결정 기한 관리 장치로, 지연 시 일정 1:1 순연 명시' },
+        { id: 'R15', name: '대시보드 지표 요구 증가 → 일정 초과', cat: '일정', prob: 3, impact: 3, score: 9, grade: 'Medium', strategy: '완화 — 1차는 직접비 기준 Group By 통계로 제한 합의, 고급 BI는 Phase 2' },
+        { id: 'R16', name: '비전문가 용어·기대치 격차 ("실시간"·"자동 롤백"·"풀스펙")', cat: '커뮤니케이션', prob: 3, impact: 3, score: 9, grade: 'Medium', strategy: '완화 — 용어 정의표 + 2주차 프로토타입 시연으로 기대치 조기 정렬' },
+        { id: 'R17', name: '검수 기준·하자보수 범위 미정의 → 검수 장기화·잔금 지연', cat: '커뮤니케이션', prob: 3, impact: 4, score: 12, grade: 'High', strategy: '회피 — 15주차 통합 테스트 시나리오를 검수 기준으로 계약서에 명시, 무상 하자보수 기간 합의' }
+      ]
+    };
+  </script>
+
+  <!-- =========== HEADER =========== -->
+  <header class="sticky top-0 z-20 backdrop-blur-xl bg-slate-950/70 border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+      <!-- Brand -->
+      <a href="#top" class="flex items-center gap-3 group">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 via-pink-500 to-emerald-500 shadow-lg shadow-purple-500/30"></div>
+        <div class="hidden sm:block">
+          <div class="font-bold text-base leading-tight">마케팅 대행사 통합 ERP</div>
+          <div class="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+            <span>WISHKET</span>
+            <span class="font-mono text-purple-400">#156767</span>
+            <span class="rounded-full px-1.5 py-0.5 bg-cyan-500/15 text-cyan-300 text-[10px] font-semibold">IT 전문가용</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Section nav (desktop) -->
+      <nav class="hidden lg:flex items-center gap-5 text-sm text-slate-400">
+        <a href="#core" class="hover:text-purple-400 transition">7연쇄</a>
+        <a href="#portfolio" class="hover:text-purple-400 transition">대시보드</a>
+        <a href="#engine" class="hover:text-purple-400 transition">정산엔진</a>
+        <a href="#insights" class="hover:text-purple-400 transition">인사이트</a>
+        <a href="#pre-qna" class="hover:text-purple-400 transition">사전답변</a>
+        <a href="#risks" class="hover:text-purple-400 transition">리스크</a>
+        <a href="#architecture" class="hover:text-purple-400 transition">아키텍처</a>
+        <a href="#timeline" class="hover:text-purple-400 transition">일정</a>
+      </nav>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2">
+        <button id="cmdk-trigger" class="hidden sm:flex items-center gap-2 text-sm text-slate-400 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition">
+          <i data-lucide="search" class="w-3.5 h-3.5"></i>
+          <span>검색</span>
+          <kbd class="font-mono text-xs px-1.5 py-0.5 rounded bg-white/10 text-slate-300">⌘K</kbd>
+        </button>
+        <a href="#cta" class="rounded-xl px-4 py-2 text-sm font-semibold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg shadow-purple-500/30 transition">
+          미팅 제안
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========== HERO =========== -->
+  <section id="top" class="relative max-w-7xl mx-auto px-6 pt-16 md:pt-24 pb-10">
+    <div class="max-w-4xl">
+      <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs bg-purple-500/10 border border-purple-500/20 text-purple-300 mb-6">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+        </span>
+        레퍼런스 UI · 제안서 참조용 · 모든 데이터는 가상 데모입니다
+      </div>
+
+      <h1 class="text-5xl md:text-7xl font-bold leading-[1.05] tracking-tight">
+        숫자가 꼬이지 않는<br/>
+        <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-emerald-400 bg-clip-text text-transparent">대행사 통합 ERP</span>
+      </h1>
+      <p class="mt-6 text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed">
+        엑셀·메신저에 파편화된 주문·배정·결제·정산을 하나로.
+        환불 결재가 승인되는 순간, 주문 상태·매출·정산·손익·이력·알림까지
+        <span class="text-purple-300 font-semibold">7가지가 전부 반영되거나 전부 취소</span>됩니다.
+      </p>
+
+      <!-- 프로젝트 메타 뱃지 (1_요구사항검토서 §1 — 미상 메타는 '비공개') -->
+      <div class="mt-6 flex flex-wrap items-center gap-2 text-xs">
+        <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-white/5 border border-white/10 text-slate-300">
+          <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-400"></i>
+          예산 <span class="font-mono font-semibold text-emerald-300">60,000,000원</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-white/5 border border-white/10 text-slate-300">
+          <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-cyan-400"></i>
+          기간 <span class="font-mono font-semibold text-cyan-300">120일</span> (17주)
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-white/5 border border-white/10 text-slate-300">
+          <i data-lucide="alarm-clock" class="w-3.5 h-3.5 text-amber-400"></i>
+          마감 <span class="font-mono font-semibold text-amber-300">2026-07-16</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400">
+          <i data-lucide="users" class="w-3.5 h-3.5"></i>
+          지원자수 비공개 · 문의 4건 · 프라이빗 매칭
+        </span>
+      </div>
+
+      <!-- Hero CTA — proto/demo 트랙 연결 (deploy.sh가 경로 sed 보정) -->
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <a href="proto/index.html" class="group inline-flex items-center gap-2 rounded-xl px-5 py-3 font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-200 hover:bg-emerald-500/25 transition">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          라이브 데모 체험하기
+          <span class="text-xs opacity-60 group-hover:opacity-100 transition">관리자 콘솔 클릭 가능 →</span>
+        </a>
+        <a href="demo/자동시연.html" class="group inline-flex items-center gap-2 rounded-xl px-5 py-3 font-semibold bg-purple-500/15 border border-purple-500/30 text-purple-200 hover:bg-purple-500/25 transition">
+          <i data-lucide="video" class="w-4 h-4"></i>
+          1분 30초 자동 시연
+          <span class="text-xs opacity-60 group-hover:opacity-100 transition">캡션 + 자동 순환 →</span>
+        </a>
+        <a href="#insights" class="rounded-xl px-5 py-3 text-sm text-slate-300 hover:text-purple-400 transition">
+          이 프로젝트의 숨은 이슈 →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== HERO INSIGHTS (Top 3 확인사항 — 1_요구사항검토서 §11) =========== -->
+  <section id="hero-insights" class="max-w-7xl mx-auto px-6 py-10 md:py-16 scroll-reveal">
+    <div class="mb-8">
+      <h2 class="text-2xl md:text-3xl font-bold">이 프로젝트를 이렇게 이해했습니다</h2>
+      <p class="mt-2 text-slate-400">공고를 11개 섹션으로 분해·분석하여 도출한 핵심 3가지 (→ 요구사항 검토서 §11 Top 3)</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <!-- Insight 1 -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all hover:scale-[1.02] hover:-translate-y-1">
+        <div class="text-xs text-purple-400 font-mono mb-2">INSIGHT 1</div>
+        <h3 class="text-xl font-semibold mb-3">성패는 화면이 아니라 금액 계산 검증</h3>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          실제 주문/환불/재결제/정산 사례 5~10건 없이는 정산 로직과 "자동 롤백"의 정의 자체가 불가능합니다.
+          현재 엑셀 양식·프로세스 흐름도와 함께 <span class="text-purple-300 font-semibold">착수 전 최우선 요청</span> 대상입니다.
+        </p>
+      </div>
+      <!-- Insight 2 -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all hover:scale-[1.02] hover:-translate-y-1">
+        <div class="text-xs text-emerald-400 font-mono mb-2">INSIGHT 2</div>
+        <h3 class="text-xl font-semibold mb-3">플랫폼 API는 '확인 후 자동화'</h3>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          판매 플랫폼 목록·API 제공 여부가 미공개입니다. 3~4주차 연동 PoC로 데이터 구조·로그인 가능성을 선검증하고,
+          그 전까지는 <span class="text-emerald-300 font-semibold">엑셀 업로드를 1차 기준선</span>으로 견적·일정을 고정합니다.
+        </p>
+      </div>
+      <!-- Insight 3 -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all hover:scale-[1.02] hover:-translate-y-1">
+        <div class="text-xs text-pink-400 font-mono mb-2">INSIGHT 3</div>
+        <h3 class="text-xl font-semibold mb-3">"자동 롤백"·승인선이 최대 복잡도</h3>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          결재→정산 연쇄 반영이 이 ERP의 차별화 핵심이자 최대 복잡도 지점입니다.
+          매출을 덮어쓰지 않는 <span class="text-pink-300 font-semibold">이벤트 원장 구조</span>로 어떤 해석(소급 반영/원상 복원)이든 수용합니다.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== CORE — 환불 승인 7연쇄 =========== -->
+  <section id="core" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+      <div class="lg:sticky lg:top-28">
+        <div class="text-xs font-mono text-purple-400 mb-3">01 · CORE</div>
+        <h2 class="text-4xl md:text-5xl font-bold leading-tight mb-6">
+          환불 승인 한 번에<br/>
+          <span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">7가지가 정확히 함께</span><br/>
+          움직이는 ERP
+        </h2>
+        <p class="text-lg text-slate-300 mb-6 leading-relaxed">
+          "환불이나 재결제 발생 시 매출 집계가 꼬인다" — 발주 동기 그 자체를 겨냥합니다.
+          기안 시점에는 어떤 재무 데이터도 바꾸지 않고, <span class="font-semibold text-purple-300">최종 승인 순간</span>에만
+          연쇄 1~6을 단일 트랜잭션으로 반영합니다.
+        </p>
+        <ul class="space-y-3 text-slate-300">
+          <li class="flex items-start gap-3">
+            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0"></i>
+            <span>연쇄 1~6은 <span class="font-mono text-sm text-emerald-300">@Transactional</span> 단일 커밋 — 부분 성공이 구조적으로 불가능</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0"></i>
+            <span>반려 시 데이터 무변경 보장 (BS0006) · 동시 승인은 낙관적 잠금(version)으로 차단</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0"></i>
+            <span>알림·이메일(연쇄 7)은 커밋 후 비동기 + 재시도 3회 — 알림 실패가 재무 반영을 되돌리지 않음</span>
+          </li>
+        </ul>
+        <div class="mt-8 rounded-2xl p-5 bg-rose-500/5 border border-rose-500/15">
+          <div class="flex items-center gap-2 text-rose-300 font-semibold text-sm mb-1">
+            <i data-lucide="shield-alert" class="w-4 h-4"></i>
+            하나라도 실패하면 전체 롤백
+          </div>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            연쇄 도중 오류가 나면 "데이터는 변경되지 않았습니다"로 응답합니다.
+            반쯤 반영된 매출·정산이 존재할 수 없는 구조 — 이것이 이 프로젝트에서 아키텍처를 고른 기준입니다.
+          </p>
+        </div>
+      </div>
+
+      <!-- 7연쇄 시각화 -->
+      <div class="rounded-3xl backdrop-blur-3xl bg-slate-900/80 border border-white/10 shadow-2xl shadow-purple-500/20 overflow-hidden">
+        <div class="flex items-center gap-3 p-4 border-b border-white/10 bg-white/5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <i data-lucide="git-branch" class="w-4 h-4 text-white"></i>
+          </div>
+          <div>
+            <div class="font-semibold text-sm">부분환불 결재 최종 승인 — APR-20260706-03</div>
+            <div class="text-xs text-emerald-400 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              POST /api/approvals/{id}/decision · decision=APPROVE
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <!-- TX boundary -->
+          <div class="rounded-2xl border border-purple-500/30 bg-purple-500/5 p-4 relative">
+            <div class="absolute -top-2.5 left-4 px-2 text-[10px] font-mono text-purple-300 bg-slate-900">단일 트랜잭션 (@Transactional) — 원자성 MG1001</div>
+            <div class="space-y-3.5 mt-2">
+              <div class="chain-step flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-mono text-sm text-purple-300 flex-shrink-0">1</div>
+                <div>
+                  <div class="text-sm font-semibold">결재 상태 전이</div>
+                  <div class="text-xs text-slate-400 font-mono mt-0.5">approvals.status → <span class="text-emerald-300">APPROVED</span></div>
+                </div>
+              </div>
+              <div class="chain-step flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-mono text-sm text-purple-300 flex-shrink-0">2</div>
+                <div>
+                  <div class="text-sm font-semibold">주문 상태 전이 <span class="text-[10px] font-mono text-slate-500">BS0010 전이표 검증</span></div>
+                  <div class="text-xs text-slate-400 font-mono mt-0.5">orders.status → <span class="text-rose-300">PARTIALLY_REFUNDED</span></div>
+                </div>
+              </div>
+              <div class="chain-step flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-mono text-sm text-purple-300 flex-shrink-0">3</div>
+                <div>
+                  <div class="text-sm font-semibold">매출 재계산 <span class="text-[10px] font-mono text-slate-500">이벤트 원장 BS0001/BS0007</span></div>
+                  <div class="text-xs text-slate-400 font-mono mt-0.5">sales_events += REFUND(−400,000) → netSales <span class="line-through opacity-60">1,200,000</span> <span class="text-emerald-300">800,000</span></div>
+                </div>
+              </div>
+              <div class="chain-step flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-mono text-sm text-purple-300 flex-shrink-0">4</div>
+                <div>
+                  <div class="text-sm font-semibold">정산 재계산 <span class="text-[10px] font-mono text-slate-500">단가 스냅샷 BS0002/MG1003</span></div>
+                  <div class="text-xs text-slate-400 font-mono mt-0.5">미수행 작업 3건 제외 → 외주비 <span class="line-through opacity-60">600,000</span> <span class="text-emerald-300">510,000</span></div>
+                </div>
+              </div>
+              <div class="chain-step flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-mono text-sm text-purple-300 flex-shrink-0">5</div>
+                <div>
+                  <div class="text-sm font-semibold">손익 반영 <span class="text-[10px] font-mono text-slate-500">집계 뷰 — 커밋 즉시</span></div>
+                  <div class="text-xs text-slate-400 font-mono mt-0.5">부서/프로젝트 손익 = 매출 − 환불 − 수수료 − 외주비</div>
+                </div>
+              </div>
+              <div class="chain-step flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-mono text-sm text-purple-300 flex-shrink-0">6</div>
+                <div>
+                  <div class="text-sm font-semibold">감사 로그 기록 <span class="text-[10px] font-mono text-slate-500">MG1004</span></div>
+                  <div class="text-xs text-slate-400 font-mono mt-0.5">audit_logs += 전/후 값 + 사유(approval_no)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- commit arrow -->
+          <div class="flex items-center justify-center gap-2 my-3 text-xs font-mono text-slate-500">
+            <i data-lucide="arrow-down" class="w-4 h-4"></i>
+            COMMIT — 이후에만 외부 부수효과
+          </div>
+
+          <!-- async step 7 -->
+          <div class="rounded-2xl border border-cyan-500/25 bg-cyan-500/5 p-4 relative">
+            <div class="absolute -top-2.5 left-4 px-2 text-[10px] font-mono text-cyan-300 bg-slate-900">커밋 후 비동기 — 재시도 3회 BS0011</div>
+            <div class="flex items-start gap-3 mt-1">
+              <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center font-mono text-sm text-cyan-300 flex-shrink-0">7</div>
+              <div>
+                <div class="text-sm font-semibold">알림 · 이메일 발송</div>
+                <div class="text-xs text-slate-400 mt-0.5">기안자·재무 담당자에게 결과 통지 — 실패해도 재무 반영은 불변</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== PORTFOLIO — 경영 대시보드 (Bento) =========== -->
+  <section id="portfolio" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="mb-10">
+      <div class="text-xs font-mono text-emerald-400 mb-3">02 · PORTFOLIO</div>
+      <h2 class="text-4xl md:text-5xl font-bold leading-tight">주문·작업·결재·정산을 한 화면에</h2>
+      <p class="mt-3 text-lg text-slate-300">매출·손익·납기·처리량 — 이벤트 원장 기반 집계라 어느 시점 숫자도 재현 가능합니다</p>
+    </div>
+
+    <!-- Bento grid KPIs -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+      <!-- Big KPI: 월 순매출 -->
+      <div class="col-span-2 md:col-span-2 md:row-span-2 rounded-3xl p-8 backdrop-blur-3xl bg-gradient-to-br from-purple-500/20 to-pink-500/10 border border-purple-500/20 relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 rounded-full bg-purple-500/10 blur-3xl"></div>
+        <div class="relative">
+          <div class="text-sm text-slate-400 mb-2">이번 달 순매출 (환불 반영)</div>
+          <div class="text-5xl md:text-6xl font-bold leading-none font-mono">
+            ₩<span data-countup="52400000">0</span>
+          </div>
+          <div class="mt-4 flex items-center gap-2 text-emerald-400">
+            <i data-lucide="trending-up" class="w-4 h-4"></i>
+            <span class="font-semibold">+4.2%</span>
+            <span class="text-slate-400 text-sm">전월 대비</span>
+          </div>
+          <div class="mt-6 text-xs text-slate-500 leading-relaxed">
+            = Σ sales_events (결제 − 환불 + 재결제) · 원본 금액은 불변, 재계산 이력 보존 (ADR-002)
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI: 월 손익 -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="text-xs text-slate-400 mb-1">이번 달 손익 (직접비 기준)</div>
+        <div class="text-2xl font-bold text-emerald-400 font-mono">
+          +₩<span data-countup="14830000">0</span>
+        </div>
+        <div class="mt-3 h-8">
+          <canvas id="sparkline-today" class="w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- KPI: 납기 준수율 -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="text-xs text-slate-400 mb-1">납기 준수율</div>
+        <div class="text-2xl font-bold text-emerald-400 font-mono">
+          <span data-countup-decimal="94.2">0</span>%
+        </div>
+        <div class="mt-1 text-xs text-slate-500">프리랜서 평가 지표 연동</div>
+      </div>
+
+      <!-- KPI: 처리 주문 -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="text-xs text-slate-400 mb-1">이번 달 처리 주문</div>
+        <div class="flex items-baseline gap-2">
+          <div class="text-2xl font-bold font-mono"><span data-countup="128">0</span></div>
+          <div class="text-sm text-slate-500">건</div>
+        </div>
+        <div class="mt-2 inline-flex items-center gap-1.5 text-xs rounded-full px-2 py-0.5 bg-emerald-500/20 text-emerald-400">
+          <span>엑셀 업로드 96 · 수기 32</span>
+        </div>
+      </div>
+
+      <!-- KPI: 대기 결재 (강조) -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-rose-500/5 border border-rose-500/15">
+        <div class="text-xs text-rose-300/80 mb-1">내 차례 대기 결재</div>
+        <div class="flex items-baseline gap-2">
+          <div class="text-2xl font-bold text-rose-300 font-mono"><span data-countup="6">0</span></div>
+          <div class="text-sm text-rose-300/60">건</div>
+        </div>
+        <div class="mt-1 text-xs text-slate-500">부분환불 3 · 단가변경 2 · 주문수정 1</div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+      <!-- 매출 추이 -->
+      <div class="lg:col-span-2 rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">월 순매출 추이</h3>
+          <div class="flex items-center gap-2 text-xs text-slate-400">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+            데모 데이터 · 최근 7개월
+          </div>
+        </div>
+        <div class="h-64">
+          <canvas id="chart-trend"></canvas>
+        </div>
+      </div>
+      <!-- 플랫폼 비중 -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <h3 class="font-semibold mb-4">주문 유입 채널 비중</h3>
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="chart-allocation"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders table -->
+    <div class="mt-6 rounded-2xl backdrop-blur-3xl bg-white/5 border border-white/10 overflow-hidden">
+      <div class="flex items-center justify-between p-6 border-b border-white/10">
+        <h3 class="font-semibold">최근 주문</h3>
+        <div class="flex items-center gap-2 text-xs text-slate-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+          가상 고객사 · 데모 금액
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs text-slate-400 border-b border-white/5">
+              <th class="px-6 py-3">주문번호</th>
+              <th class="px-4 py-3">채널</th>
+              <th class="px-4 py-3">고객사</th>
+              <th class="px-4 py-3">항목</th>
+              <th class="px-4 py-3 text-right">순매출</th>
+              <th class="px-4 py-3">상태</th>
+              <th class="px-4 py-3">담당</th>
+            </tr>
+          </thead>
+          <tbody class="text-slate-300">
+            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+              <td class="px-6 py-3 font-mono text-xs text-purple-300">ORD-2607-041</td>
+              <td class="px-4 py-3 text-xs">스마트스토어</td>
+              <td class="px-4 py-3">그린리프</td>
+              <td class="px-4 py-3 text-slate-400">인스타 릴스 15건</td>
+              <td class="px-4 py-3 text-right font-mono">₩900,000</td>
+              <td class="px-4 py-3"><span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-purple-500/15 text-purple-300">진행중 <span class="font-mono opacity-50">IN_PROGRESS</span></span></td>
+              <td class="px-4 py-3 text-xs text-slate-400">김하늘</td>
+            </tr>
+            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+              <td class="px-6 py-3 font-mono text-xs text-purple-300">ORD-2607-042</td>
+              <td class="px-4 py-3 text-xs">스마트스토어</td>
+              <td class="px-4 py-3">한빛식품</td>
+              <td class="px-4 py-3 text-slate-400">블로그 콘텐츠 20건</td>
+              <td class="px-4 py-3 text-right font-mono">₩800,000 <span class="text-[10px] text-rose-300">(−400,000)</span></td>
+              <td class="px-4 py-3"><span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-rose-500/15 text-rose-300">부분환불 <span class="font-mono opacity-50">PARTIALLY_REFUNDED</span></span></td>
+              <td class="px-4 py-3 text-xs text-slate-400">이서준</td>
+            </tr>
+            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+              <td class="px-6 py-3 font-mono text-xs text-purple-300">ORD-2607-043</td>
+              <td class="px-4 py-3 text-xs">쿠팡</td>
+              <td class="px-4 py-3">모던가구</td>
+              <td class="px-4 py-3 text-slate-400">상세페이지 리뉴얼</td>
+              <td class="px-4 py-3 text-right font-mono">₩2,400,000</td>
+              <td class="px-4 py-3"><span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-emerald-500/15 text-emerald-300">완료 <span class="font-mono opacity-50">DONE</span></span></td>
+              <td class="px-4 py-3 text-xs text-slate-400">박지우</td>
+            </tr>
+            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+              <td class="px-6 py-3 font-mono text-xs text-purple-300">ORD-2607-044</td>
+              <td class="px-4 py-3 text-xs">이메일</td>
+              <td class="px-4 py-3">세림전자</td>
+              <td class="px-4 py-3 text-slate-400">유튜브 광고 영상 2편</td>
+              <td class="px-4 py-3 text-right font-mono">₩3,600,000</td>
+              <td class="px-4 py-3"><span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-cyan-500/15 text-cyan-300">배정완료 <span class="font-mono opacity-50">ASSIGNED</span></span></td>
+              <td class="px-4 py-3 text-xs text-slate-400">김하늘</td>
+            </tr>
+            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+              <td class="px-6 py-3 font-mono text-xs text-purple-300">ORD-2607-045</td>
+              <td class="px-4 py-3 text-xs">수기 등록</td>
+              <td class="px-4 py-3">블루밍뷰티</td>
+              <td class="px-4 py-3 text-slate-400">인플루언서 캠페인</td>
+              <td class="px-4 py-3 text-right font-mono">₩5,000,000</td>
+              <td class="px-4 py-3"><span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/15 text-amber-300">환불요청 <span class="font-mono opacity-50">REFUND_REQUESTED</span></span></td>
+              <td class="px-4 py-3 text-xs text-slate-400">최유나</td>
+            </tr>
+            <tr class="hover:bg-white/5 transition">
+              <td class="px-6 py-3 font-mono text-xs text-purple-300">ORD-2607-046</td>
+              <td class="px-4 py-3 text-xs">쿠팡</td>
+              <td class="px-4 py-3">오름출판</td>
+              <td class="px-4 py-3 text-slate-400">SNS 채널 운영 (월)</td>
+              <td class="px-4 py-3 text-right font-mono">₩1,800,000</td>
+              <td class="px-4 py-3"><span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-slate-500/15 text-slate-300">접수 <span class="font-mono opacity-50">RECEIVED</span></span></td>
+              <td class="px-4 py-3 text-xs text-slate-400">이서준</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="px-6 py-3 border-t border-white/5 text-xs text-slate-500">
+        상태 ENUM: RECEIVED → ASSIGNED → IN_PROGRESS → DONE · 환불 계열: REFUND_REQUESTED → PARTIALLY_REFUNDED (결재 승인 경유만 진입 가능)
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== ENGINE — 정산 재계산 엔진 (이벤트 원장) =========== -->
+  <section id="engine" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="mb-10">
+      <div class="text-xs font-mono text-pink-400 mb-3">03 · ENGINE</div>
+      <h2 class="text-4xl md:text-5xl font-bold leading-tight">덮어쓰지 않는 정산 엔진</h2>
+      <p class="mt-3 text-lg text-slate-300">
+        원본 금액은 불변 · 결제/환불/재결제는 부호 있는 이벤트로 적재 · 매출은 항상 이벤트 합산 — "자동 롤백"의 어떤 해석에도 대응합니다
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- 이벤트 원장 타임라인 -->
+      <div class="rounded-2xl p-8 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <div class="text-xs text-slate-400">ORD-2607-042 · 한빛식품 · sales_events 원장</div>
+            <div class="flex items-baseline gap-3 mt-1">
+              <div class="text-4xl font-bold font-mono">₩800,000</div>
+              <div class="text-sm text-slate-500">netSales (합산 결과)</div>
+            </div>
+          </div>
+          <div class="text-xs text-slate-400 text-right">
+            recalc #2<br>
+            <span class="font-mono text-purple-400">BS0001 · BS0007</span>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-center gap-3 rounded-xl p-3 bg-white/5 border border-white/10">
+            <div class="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="plus" class="w-4 h-4 text-emerald-400"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-sm font-semibold flex items-center gap-2">PAYMENT <span class="text-[10px] font-mono text-slate-500">2026-06-12 · IMP-002 엑셀 업로드</span></div>
+              <div class="text-xs text-slate-400">플랫폼 결제 수수료 −42,000 별도 이벤트</div>
+            </div>
+            <div class="font-mono text-emerald-300 text-sm">+1,200,000</div>
+          </div>
+          <div class="flex items-center gap-3 rounded-xl p-3 bg-white/5 border border-rose-500/20">
+            <div class="w-9 h-9 rounded-lg bg-rose-500/20 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="minus" class="w-4 h-4 text-rose-400"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-sm font-semibold flex items-center gap-2">PARTIAL_REFUND <span class="text-[10px] font-mono text-slate-500">2026-07-06 · 결재 APR-20260706-03 승인</span></div>
+              <div class="text-xs text-slate-400">고객 요청 — 미진행분 3건 환불 · 승인 전에는 이벤트 미적재</div>
+            </div>
+            <div class="font-mono text-rose-300 text-sm">−400,000</div>
+          </div>
+          <div class="flex items-center gap-3 rounded-xl p-3 bg-purple-500/10 border border-purple-500/25">
+            <div class="w-9 h-9 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="sigma" class="w-4 h-4 text-purple-300"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-sm font-semibold">recalcNetSales — 합산</div>
+              <div class="text-xs text-slate-400">sales_recalc_histories에 트리거·전/후 값 저장</div>
+            </div>
+            <div class="font-mono text-purple-300 text-sm font-bold">= 800,000</div>
+          </div>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-white/10 text-xs text-slate-500 leading-relaxed">
+          취소 결재(원상 복원)가 필요해져도 <span class="text-slate-300">반대 부호 이벤트 추가</span>로 처리 — 스키마 변경 없음.
+          어느 시점 매출이든 이벤트 재생으로 재현 가능합니다.
+        </div>
+      </div>
+
+      <!-- 외주비 포함 판정 + 손익 -->
+      <div class="space-y-6">
+        <div class="rounded-2xl p-8 backdrop-blur-3xl bg-white/5 border border-white/10">
+          <div class="flex items-center gap-2 mb-4">
+            <i data-lucide="scale" class="w-4 h-4 text-pink-400"></i>
+            <h3 class="font-semibold">외주비 포함 판정 (BS0002)</h3>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div class="rounded-xl p-4 bg-emerald-500/5 border border-emerald-500/20">
+              <div class="text-xs text-slate-400 mb-1">수행 완료 — 지급 유지</div>
+              <div class="font-mono text-emerald-300 font-bold">17건 × ₩30,000</div>
+              <div class="text-xs text-slate-500 mt-1">REVIEW / DONE 상태</div>
+            </div>
+            <div class="rounded-xl p-4 bg-rose-500/5 border border-rose-500/20">
+              <div class="text-xs text-slate-400 mb-1">미수행 — 제외 (환불 반영)</div>
+              <div class="font-mono text-rose-300 font-bold">3건 제외</div>
+              <div class="text-xs text-slate-500 mt-1">TODO / IN_PROGRESS / ON_HOLD</div>
+            </div>
+          </div>
+          <div class="mt-4 rounded-xl p-4 bg-white/5 border border-white/10 flex items-center justify-between">
+            <div class="text-sm text-slate-300">외주비 (rate_snapshot 기준 · 원 단위 내림)</div>
+            <div class="font-mono"><span class="line-through text-slate-500 text-sm">600,000</span> <span class="text-pink-300 font-bold">₩510,000</span></div>
+          </div>
+          <p class="mt-3 text-xs text-slate-500 leading-relaxed">
+            비례 차감 정책 채택 시 <span class="font-mono text-slate-400">decidePayoutInclusion</span> 판정 함수만 교체 —
+            1주차 정책 확정(실사례 5~10건)에 대비한 설계입니다.
+          </p>
+        </div>
+
+        <div class="rounded-2xl p-6 backdrop-blur-3xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20">
+          <div class="flex items-start gap-4">
+            <div class="p-2.5 rounded-xl bg-purple-500/20">
+              <i data-lucide="lightbulb" class="w-5 h-5 text-purple-300"></i>
+            </div>
+            <div class="flex-1">
+              <div class="font-semibold mb-2">이 주문의 최종 손익 (직접비 기준)</div>
+              <div class="font-mono text-sm text-slate-300 leading-relaxed">
+                800,000 <span class="text-slate-500">(순매출)</span> − 28,000 <span class="text-slate-500">(수수료 재계산)</span> − 510,000 <span class="text-slate-500">(외주비)</span>
+                = <span class="text-emerald-300 font-bold text-lg">₩262,000</span>
+              </div>
+              <p class="mt-3 text-xs text-amber-400 flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                확정(CONFIRMED)된 정산은 직접 수정 불가 — 결재 승인 경유 조정 이벤트(settlement_adjustments)로만 반영 (MG1003)
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== OPERATOR — 운영·권한·수집 =========== -->
+  <section id="operator" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="mb-10">
+      <div class="text-xs font-mono text-cyan-400 mb-3">04 · OPERATOR</div>
+      <h2 class="text-4xl md:text-5xl font-bold leading-tight">운영 관점까지 설계에 포함</h2>
+      <p class="mt-3 text-lg text-slate-300">
+        RBAC 동적 권한 · 전 모듈 감사 로그(AOP) · 수집 실패 대체 경로 — 오픈 이후 6개월을 미리 대비합니다
+      </p>
+    </div>
+
+    <!-- Admin KPIs -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="flex items-center gap-2 text-slate-400 text-xs mb-2">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+          권한 역할
+        </div>
+        <div class="text-3xl font-bold font-mono"><span data-countup="5">0</span><span class="text-base text-slate-500">종</span></div>
+        <div class="text-xs text-slate-500 mt-1">ADMIN·EXEC·TEAM_LEAD·FINANCE·STAFF</div>
+      </div>
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="flex items-center gap-2 text-slate-400 text-xs mb-2">
+          <i data-lucide="database" class="w-3.5 h-3.5"></i>
+          감사 로그 누적
+        </div>
+        <div class="text-3xl font-bold font-mono"><span data-countup="12847">0</span></div>
+        <div class="text-xs text-slate-500 mt-1">전 모듈 AOP 자동 기록 · 전/후 값 보존</div>
+      </div>
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="flex items-center gap-2 text-slate-400 text-xs mb-2">
+          <i data-lucide="mail-check" class="w-3.5 h-3.5"></i>
+          알림 발송 성공률
+        </div>
+        <div class="text-3xl font-bold text-emerald-400 font-mono"><span data-countup-decimal="99.2">0</span>%</div>
+        <div class="text-xs text-slate-500 mt-1">재시도 3회 포함 · 재무 반영과 분리</div>
+      </div>
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="flex items-center gap-2 text-slate-400 text-xs mb-2">
+          <i data-lucide="download-cloud" class="w-3.5 h-3.5"></i>
+          이번 달 수집 배치
+        </div>
+        <div class="text-3xl font-bold font-mono"><span data-countup="24">0</span><span class="text-base text-slate-500">건</span></div>
+        <div class="text-xs text-slate-500 mt-1">성공 22 · 실패 1 · 대체 경로 1</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- 수집 배치 — fallback 쌍 -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i data-lucide="repeat" class="w-4 h-4 text-cyan-400"></i>
+            <h3 class="font-semibold">수집 이력 — API 실패가 업무를 멈추지 않습니다</h3>
+          </div>
+        </div>
+        <div class="space-y-3 text-sm">
+          <div class="flex items-center gap-3 rounded-xl p-3 bg-white/5 border border-white/10">
+            <span class="font-mono text-xs text-purple-300 w-16 flex-shrink-0">IMP-002</span>
+            <div class="flex-1">
+              <div class="text-xs text-slate-300">EXCEL_UPLOAD · 주문 120행 (정상 117 · 오류 3)</div>
+            </div>
+            <span class="rounded-full px-2 py-0.5 text-[11px] bg-emerald-500/15 text-emerald-300 font-mono">SUCCESS</span>
+          </div>
+          <div class="flex items-center gap-3 rounded-xl p-3 bg-rose-500/5 border border-rose-500/20">
+            <span class="font-mono text-xs text-purple-300 w-16 flex-shrink-0">IMP-003</span>
+            <div class="flex-1">
+              <div class="text-xs text-slate-300">SMARTSTORE_API · 결제내역 자동 수집</div>
+              <div class="text-[11px] text-rose-300/80 mt-0.5">실패 사유: 로그인 차단 (플랫폼 보안 정책 변경)</div>
+            </div>
+            <span class="rounded-full px-2 py-0.5 text-[11px] bg-rose-500/15 text-rose-300 font-mono">FAILED</span>
+          </div>
+          <div class="flex items-center justify-center gap-2 text-[11px] text-cyan-300/80 font-mono">
+            <i data-lucide="corner-down-right" class="w-3.5 h-3.5"></i>
+            실패 감지 → 담당자 알림 → 엑셀 업로드 대체 경로 안내 (ADR-005)
+          </div>
+          <div class="flex items-center gap-3 rounded-xl p-3 bg-cyan-500/5 border border-cyan-500/25">
+            <span class="font-mono text-xs text-purple-300 w-16 flex-shrink-0">IMP-004</span>
+            <div class="flex-1">
+              <div class="text-xs text-slate-300">EXCEL_UPLOAD · 45행 중 43 성공 · 2 오류 행 분리</div>
+              <div class="text-[11px] text-cyan-300/80 mt-0.5 font-mono">fallbackOf: IMP-003 — 원본 파일 S3 보관 (ADR-008)</div>
+            </div>
+            <span class="rounded-full px-2 py-0.5 text-[11px] bg-emerald-500/15 text-emerald-300 font-mono">SUCCESS</span>
+          </div>
+        </div>
+        <p class="mt-4 text-xs text-slate-500 leading-relaxed">
+          크롤링/API 워커(Node.js Playwright)는 별도 컨테이너 — 워커 장애가 ERP 가용성에 영향을 주지 않고,
+          모든 외부 유입은 import batch 계보로 "이 주문이 어디서 왔는가"에 항상 답합니다.
+        </p>
+      </div>
+
+      <div class="space-y-6">
+        <!-- RBAC 미니 매트릭스 -->
+        <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+          <div class="flex items-center gap-2 mb-4">
+            <i data-lucide="users" class="w-4 h-4 text-cyan-400"></i>
+            <h3 class="font-semibold">역할 × 영역 접근 매트릭스 (1차 RBAC — MG1005)</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="text-left text-slate-400 border-b border-white/10">
+                  <th class="py-2 pr-2">역할</th>
+                  <th class="py-2 px-2 text-center">주문/작업</th>
+                  <th class="py-2 px-2 text-center">결재</th>
+                  <th class="py-2 px-2 text-center">정산/재무</th>
+                  <th class="py-2 px-2 text-center">권한 관리</th>
+                  <th class="py-2 px-2 text-center">감사 로그</th>
+                </tr>
+              </thead>
+              <tbody class="text-slate-300">
+                <tr class="border-b border-white/5"><td class="py-2 pr-2 font-mono text-purple-300">ADMIN</td><td class="text-center">−</td><td class="text-center">−</td><td class="text-center">−</td><td class="text-center text-emerald-400">●</td><td class="text-center text-emerald-400">●</td></tr>
+                <tr class="border-b border-white/5"><td class="py-2 pr-2 font-mono text-purple-300">EXEC</td><td class="text-center text-slate-500">조회</td><td class="text-center text-emerald-400">최종 승인</td><td class="text-center text-slate-500">손익 조회</td><td class="text-center">−</td><td class="text-center text-slate-500">조회</td></tr>
+                <tr class="border-b border-white/5"><td class="py-2 pr-2 font-mono text-purple-300">TEAM_LEAD</td><td class="text-center text-emerald-400">● 관리</td><td class="text-center text-emerald-400">1차 승인</td><td class="text-center">−</td><td class="text-center">−</td><td class="text-center text-slate-500">관련분</td></tr>
+                <tr class="border-b border-white/5"><td class="py-2 pr-2 font-mono text-purple-300">FINANCE</td><td class="text-center text-slate-500">조회</td><td class="text-center text-emerald-400">재무 승인</td><td class="text-center text-emerald-400">●</td><td class="text-center">−</td><td class="text-center text-slate-500">관련분</td></tr>
+                <tr><td class="py-2 pr-2 font-mono text-purple-300">STAFF</td><td class="text-center text-emerald-400">등록/기안</td><td class="text-center text-slate-500">본인 기안</td><td class="text-center">−</td><td class="text-center">−</td><td class="text-center">−</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-3 text-xs text-slate-500">역할-권한 매핑은 관리자 화면에서 실시간 변경(동적 권한) · 행 단위 데이터 권한은 Phase 2</p>
+        </div>
+
+        <!-- 감사 로그 미리보기 -->
+        <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+          <div class="flex items-center gap-2 mb-4">
+            <i data-lucide="scroll-text" class="w-4 h-4 text-cyan-400"></i>
+            <h3 class="font-semibold">감사 로그 — 7연쇄가 남긴 흔적</h3>
+          </div>
+          <div class="space-y-2 font-mono text-[11px] text-slate-400">
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 flex flex-wrap gap-x-2">
+              <span class="text-purple-300">[APPROVAL]</span> APR-20260706-03 <span class="text-slate-500">status:</span> IN_PROGRESS → <span class="text-emerald-300">APPROVED</span> <span class="text-slate-600">· 재무팀 승인</span>
+            </div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 flex flex-wrap gap-x-2">
+              <span class="text-purple-300">[ORDER]</span> ORD-2607-042 <span class="text-slate-500">status:</span> IN_PROGRESS → <span class="text-rose-300">PARTIALLY_REFUNDED</span> <span class="text-slate-600">· 사유 approval_no 2026-00142</span>
+            </div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 flex flex-wrap gap-x-2">
+              <span class="text-purple-300">[SALES]</span> ORD-2607-042 <span class="text-slate-500">netSales:</span> 1,200,000 → <span class="text-emerald-300">800,000</span> <span class="text-slate-600">· REFUND 이벤트 적재</span>
+            </div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 flex flex-wrap gap-x-2">
+              <span class="text-purple-300">[SETTLEMENT]</span> SET-2607-06 <span class="text-slate-500">payout:</span> 600,000 → <span class="text-emerald-300">510,000</span> <span class="text-slate-600">· 미수행 3건 제외</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== INSIGHTS — 모호·누락 (경쟁자 없음) =========== -->
+  <section id="insights" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="mb-10">
+      <div class="inline-flex items-center gap-2 text-xs font-mono text-amber-400 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+        05 · INSIGHTS
+        <span class="rounded-full px-2 py-0.5 bg-amber-500/20 text-amber-300 text-[10px] font-semibold">
+          보너스 자료
+        </span>
+      </div>
+      <h2 class="text-4xl md:text-5xl font-bold leading-tight">우리가 발견한 숨은 이슈들</h2>
+      <p class="mt-3 text-lg text-slate-300">
+        공고를 11개 섹션으로 분해 분석한 결과 — 모호 12건·누락 16건 중 견적을 좌우하는 핵심만 추렸습니다 (명확도 점수 58/100)
+      </p>
+    </div>
+
+    <!-- 모호 카드 3개 (§7 #1·#2·#4) -->
+    <div class="mb-10">
+      <h3 class="font-semibold mb-4 flex items-center gap-2">
+        <i data-lucide="help-circle" class="w-5 h-5 text-amber-400"></i>
+        모호한 요구사항 Top 3 — 해석 A/B에 따라 견적이 달라집니다
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        <!-- §7 #1 -->
+        <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10 spring-hover">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono text-amber-400">§7 #1</span>
+            <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300">일정 ±3주</span>
+          </div>
+          <h4 class="font-semibold mb-3">외부 판매 플랫폼 목록·API 제공 여부</h4>
+          <div class="space-y-2 text-xs">
+            <div class="rounded-lg p-3 bg-emerald-500/5 border border-emerald-500/20">
+              <span class="font-mono text-emerald-300">해석 A</span>
+              <p class="mt-1 text-slate-300">공식 API 제공 플랫폼 소수(1~3개) → API 자동 수집 가능</p>
+            </div>
+            <div class="rounded-lg p-3 bg-amber-500/5 border border-amber-500/20">
+              <span class="font-mono text-amber-300">해석 B</span>
+              <p class="mt-1 text-slate-300">API 미제공·판매자센터만 존재 → 엑셀 업로드 또는 Playwright 크롤링, 5개+면 공수 급증</p>
+            </div>
+          </div>
+          <p class="mt-3 text-xs text-slate-500">우리의 대응: 3~4주차 PoC 선검증 · 그 전까지 엑셀 기준선 고정</p>
+        </div>
+        <!-- §7 #2 -->
+        <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10 spring-hover">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono text-amber-400">§7 #2</span>
+            <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300">정산 재개발 +2주</span>
+          </div>
+          <h4 class="font-semibold mb-3">부분환불 시 정산 재계산 규칙</h4>
+          <div class="space-y-2 text-xs">
+            <div class="rounded-lg p-3 bg-emerald-500/5 border border-emerald-500/20">
+              <span class="font-mono text-emerald-300">해석 A</span>
+              <p class="mt-1 text-slate-300">매출만 환불액 차감 · 외주비는 작업 수행 여부로 별도 판단</p>
+            </div>
+            <div class="rounded-lg p-3 bg-amber-500/5 border border-amber-500/20">
+              <span class="font-mono text-amber-300">해석 B</span>
+              <p class="mt-1 text-slate-300">환불 비율에 비례해 외주비·수수료·손익까지 일괄 재계산</p>
+            </div>
+          </div>
+          <p class="mt-3 text-xs text-slate-500">우리의 대응: 판정 함수 교체형 설계 — 실사례 5~10건으로 1주차 확정</p>
+        </div>
+        <!-- §7 #4 -->
+        <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10 spring-hover">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono text-amber-400">§7 #4</span>
+            <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300">데이터 모델 근본 구조</span>
+          </div>
+          <h4 class="font-semibold mb-3">"자동 롤백"의 정확한 의미</h4>
+          <div class="space-y-2 text-xs">
+            <div class="rounded-lg p-3 bg-emerald-500/5 border border-emerald-500/20">
+              <span class="font-mono text-emerald-300">해석 A</span>
+              <p class="mt-1 text-slate-300">승인된 수정/환불을 주문·정산에 소급 반영(재계산)</p>
+            </div>
+            <div class="rounded-lg p-3 bg-amber-500/5 border border-amber-500/20">
+              <span class="font-mono text-amber-300">해석 B</span>
+              <p class="mt-1 text-slate-300">A + 이미 반영된 결재를 취소하고 이전 상태로 복원하는 역처리 포함 (+1~2주)</p>
+            </div>
+          </div>
+          <p class="mt-3 text-xs text-slate-500">우리의 대응: 이벤트 원장 — A/B 모두 수용 (B는 반대 부호 이벤트)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 누락 뱃지 5개 (§8) -->
+    <div>
+      <h3 class="font-semibold mb-4 flex items-center gap-2">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400"></i>
+        누락 가능 요구사항 — 견적 전 확인하지 않으면 무상 범위 확장 압력으로 돌아옵니다
+      </h3>
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="flex flex-wrap gap-3">
+          <span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-red-500/10 border border-red-500/20 text-red-200 cursor-help hover:bg-red-500/20 transition" title="§8.1 — 과거 주문/정산/프리랜서 데이터를 어느 기간·범위까지 이관? 공고는 '엑셀 양식 제공'만 언급. 오픈 시 초기 데이터 적재는 사실상 필수 (+1~2주)">
+            <i data-lucide="database-zap" class="w-4 h-4"></i> 기존 엑셀 데이터 마이그레이션 범위
+          </span>
+          <span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-red-500/10 border border-red-500/20 text-red-200 cursor-help hover:bg-red-500/20 transition" title="§8.3 — 백업 주기·복구 목표(RTO/RPO)·장애 대응 절차 무언급. 금액 데이터 시스템에서 치명적 누락">
+            <i data-lucide="hard-drive-download" class="w-4 h-4"></i> 백업·장애 대응 (RTO/RPO)
+          </span>
+          <span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-red-500/10 border border-red-500/20 text-red-200 cursor-help hover:bg-red-500/20 transition" title="§8.5 — 프리랜서 계좌번호·연락처·주민등록번호성 정보를 다루는데 공고는 '환경변수 분리'만 언급. 암호화 저장·마스킹·접근 분리·개인정보처리방침 필수">
+            <i data-lucide="lock" class="w-4 h-4"></i> 프리랜서 개인정보 보호
+          </span>
+          <span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-red-500/10 border border-red-500/20 text-red-200 cursor-help hover:bg-red-500/20 transition" title="§8.2 — '통합 테스트 및 이관'만 있고 검수 시나리오·완료 판정 기준·하자보수 기간이 없음 → 검수 확인서 기준을 계약서에 명시 필요">
+            <i data-lucide="clipboard-check" class="w-4 h-4"></i> 검수 기준·하자보수 기간
+          </span>
+          <span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm bg-red-500/10 border border-red-500/20 text-red-200 cursor-help hover:bg-red-500/20 transition" title="§8.2 — 임직원 수·동시 접속·월 주문 건수 무언급 → 인프라 사이징·월 클라우드 비용 산정 불가">
+            <i data-lucide="gauge" class="w-4 h-4"></i> 동시 사용자 규모·성능 목표
+          </span>
+        </div>
+        <p class="mt-4 text-xs text-slate-500">
+          ℹ 뱃지에 마우스를 올리면 이유가 표시됩니다. 이 항목들은 공고 원문에 없지만 구현 시 반드시 합의가 필요합니다 (→ 요구사항 검토서 §8, 발주자 질의서 Q10~Q16).
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== PRE-QNA — 발주자 사전 검증 질문 답변 =========== -->
+  <section id="pre-qna" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="mb-10">
+      <div class="inline-flex items-center gap-2 text-xs font-mono text-emerald-400 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        PRE · 사전 질문 답변
+        <span class="rounded-full px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold">
+          발주자 검증 질문
+        </span>
+      </div>
+      <h2 class="text-4xl md:text-5xl font-bold leading-tight">주신 질문에 먼저 답합니다</h2>
+      <p class="mt-3 text-lg text-slate-300">
+        발주자님이 사전에 확인하신 3가지 — 경험·설계·역량을 실제 근거로 정직하게 답변드립니다
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <!-- 답변 1 — 결제내역 크롤링 경험 (§16.3) -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10 spring-hover flex flex-col">
+        <div class="flex items-center gap-2 mb-3">
+          <i data-lucide="bot" class="w-5 h-5 text-pink-400"></i>
+          <span class="text-xs font-mono text-emerald-400">답변 1</span>
+        </div>
+        <blockquote class="rounded-lg p-3 bg-slate-900/50 border-l-2 border-emerald-400/50 text-sm text-slate-200 mb-4">
+          "결제내역 크롤링이 필요한데 해당 부분도 경험이 있으신가요?"
+        </blockquote>
+        <ul class="space-y-2 text-sm text-slate-300 flex-1">
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i><span>먼저 <span class="text-emerald-300 font-semibold">공식 API 연동</span> 가능 여부를 확인합니다 — 가장 안정적</span></li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i><span>없거나 일부만 제공되면 <span class="text-pink-300 font-semibold">Playwright 브라우저 자동화</span>로 수집</span></li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i><span>정책 변경·캡차 리스크 대비 — <span class="text-slate-100">실패 로그·재시도·수동 업로드 대체 경로</span>를 함께 설계</span></li>
+        </ul>
+        <div class="mt-4 inline-flex items-start gap-2 rounded-lg px-3 py-2 bg-pink-500/10 border border-pink-500/25 text-xs text-pink-200">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 mt-0.5 flex-shrink-0"></i>
+          <span>Playwright 실운영 — 위시켓 프로젝트 데이터 <span class="font-mono font-semibold">3,657건</span> 수집·분석 도구를 직접 구축·운영 중</span>
+        </div>
+      </div>
+
+      <!-- 답변 2 — DB/서버 설계 (§16.2) -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10 spring-hover flex flex-col">
+        <div class="flex items-center gap-2 mb-3">
+          <i data-lucide="database" class="w-5 h-5 text-cyan-400"></i>
+          <span class="text-xs font-mono text-emerald-400">답변 2</span>
+        </div>
+        <blockquote class="rounded-lg p-3 bg-slate-900/50 border-l-2 border-emerald-400/50 text-sm text-slate-200 mb-4">
+          "db설계, 서버설계는 어떻게 하실 예정이실까요?"
+        </blockquote>
+        <ul class="space-y-2 text-sm text-slate-300 flex-1">
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i><span>백엔드 <span class="text-cyan-300 font-semibold">Spring Boot 모듈형 모놀리식</span> + <span class="text-emerald-300 font-semibold">PostgreSQL</span></span></li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i><span>주문·작업·결재·정산·프리랜서·권한·감사로그를 핵심 도메인으로 분리한 ERD</span></li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i><span>환불/재결제/정산은 <span class="text-slate-100">트랜잭션 단위</span>로 처리</span></li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i><span>외부 연동은 <span class="text-slate-100">3~4주차 PoC</span>로 선검증 (API·로그인·수집 항목)</span></li>
+        </ul>
+        <a href="#architecture" class="mt-4 inline-flex items-center gap-2 rounded-lg px-3 py-2 bg-cyan-500/10 border border-cyan-500/25 text-xs text-cyan-200 hover:bg-cyan-500/20 transition">
+          <i data-lucide="box" class="w-3.5 h-3.5"></i>
+          자세한 설계는 아래 ARCHITECTURE 참조
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </a>
+      </div>
+
+      <!-- 답변 3 — ERP 제작 경험 (§16.4 · 과장 없이 실적만) -->
+      <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10 spring-hover flex flex-col">
+        <div class="flex items-center gap-2 mb-3">
+          <i data-lucide="award" class="w-5 h-5 text-purple-400"></i>
+          <span class="text-xs font-mono text-emerald-400">답변 3</span>
+        </div>
+        <blockquote class="rounded-lg p-3 bg-slate-900/50 border-l-2 border-emerald-400/50 text-sm text-slate-200 mb-4">
+          "erp 제작경험이 있나요?"
+        </blockquote>
+        <ul class="space-y-2 text-sm text-slate-300 flex-1">
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i><span><span class="text-purple-300 font-semibold">22년</span> 업무 시스템(ERP·금융·관리시스템) 백엔드 개발</span></li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i><span><span class="text-slate-100">산업은행 EKP 전자결재 시스템</span> 유지보수 — 이 공고 우대사항 <span class="text-purple-200">"복잡한 전자 결재 워크플로우 개발 경험"</span>에 직결</span></li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0"></i><span>최근 AI/LLM 기반 업무 자동화 통합</span></li>
+        </ul>
+        <p class="mt-4 rounded-lg px-3 py-2 bg-purple-500/10 border border-purple-500/25 text-xs text-purple-100 leading-relaxed">
+          ERP는 단순 CRUD가 아니라 <span class="font-semibold">업무 흐름과 데이터 정합성</span>이 핵심이라 보고, 주문·배정·결재·환불·정산·손익이 하나의 흐름으로 이어지도록 설계합니다.
+        </p>
+      </div>
+    </div>
+
+    <p class="mt-6 text-xs text-slate-500">
+      ℹ 위 실적은 실제 수행 경험만 기재했습니다 (→ 사용자 마일스톤 문서 §16.2~§16.4).
+    </p>
+  </section>
+
+  <!-- =========== QUESTIONS — 발주자 질의 (경쟁자 없음) =========== -->
+  <section id="questions" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="mb-10">
+      <div class="inline-flex items-center gap-2 text-xs font-mono text-purple-400 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
+        06 · QUESTIONS
+        <span class="rounded-full px-2 py-0.5 bg-purple-500/20 text-purple-300 text-[10px] font-semibold">
+          보너스 자료
+        </span>
+      </div>
+      <h2 class="text-4xl md:text-5xl font-bold leading-tight">발주자님께 꼭 여쭙고 싶은 10가지</h2>
+      <p class="mt-3 text-lg text-slate-300">
+        전체 질의서 17건(🔴 필수 8 · 🟡 중요 8 · 🟢 선택 1) 중 핵심 10건 — "미확인/모름"도 유효한 답변이며, 그 경우 엑셀 업로드 기준선으로 견적을 고정합니다
+      </p>
+    </div>
+
+    <div class="rounded-2xl backdrop-blur-3xl bg-white/5 border border-white/10 overflow-hidden" id="questions-accordion">
+      <details class="accordion-item" open>
+        <summary>
+          <span class="font-mono text-xs text-purple-400 w-8 flex-shrink-0">Q1</span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 flex-shrink-0">🔴 필수</span>
+          <span class="flex-1 text-sm font-medium">외부 판매 플랫폼의 목록·개수와 각 플랫폼의 공식 API 제공 여부는?</span>
+        </summary>
+        <div class="accordion-body">
+          <p><span class="text-slate-400">선택지:</span> A) REST API + OAuth 등 공식 API 제공 / B) 판매자센터 로그인 + 엑셀 다운로드만 / C) 없음·미확인 — 플랫폼별 A/B/C 표기 요청</p>
+          <p class="mt-2 text-amber-300/90"><span class="text-slate-400">영향:</span> 자동화/수동화 범위 전체와 주문 소스 ERD 결정. 무리한 전 플랫폼 자동화 시 일정 +3주 이상. 3~4주차 PoC 대상 선정에 직결.</p>
+        </div>
+      </details>
+      <details class="accordion-item">
+        <summary>
+          <span class="font-mono text-xs text-purple-400 w-8 flex-shrink-0">Q2</span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 flex-shrink-0">🔴 필수</span>
+          <span class="flex-1 text-sm font-medium">플랫폼 결제 내역(결제·수수료·환불·재결제)은 어떤 방식으로 확보 가능한가요?</span>
+        </summary>
+        <div class="accordion-body">
+          <p><span class="text-slate-400">선택지:</span> A) 정산 API 제공 / B) 판매자센터 정산 엑셀 다운로드 / C) 미확인</p>
+          <p class="mt-2 text-amber-300/90"><span class="text-slate-400">영향:</span> 정산 모듈 테이블 설계(수수료·환불 필드)의 전제. 확인 지연 시 11~12주차 정산 개발에서 ERD 재작업 위험 +2주.</p>
+        </div>
+      </details>
+      <details class="accordion-item">
+        <summary>
+          <span class="font-mono text-xs text-purple-400 w-8 flex-shrink-0">Q3</span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 flex-shrink-0">🔴 필수</span>
+          <span class="flex-1 text-sm font-medium">부분환불 발생 시 재계산 범위는 어디까지인가요?</span>
+        </summary>
+        <div class="accordion-body">
+          <p><span class="text-slate-400">선택지:</span> A) 매출만 환불액 차감, 외주비는 작업 수행 여부로 별도 판단 / B) 환불 비율에 비례해 외주비·플랫폼 수수료·손익까지 일괄 재계산</p>
+          <p class="mt-2 text-amber-300/90"><span class="text-slate-400">영향:</span> 정산 엔진 핵심 알고리즘. 착수 후 변경 시 정산 재개발 +2주. 실제 환불 사례 2~3건과 함께 답변 요청 (Q14 연계).</p>
+        </div>
+      </details>
+      <details class="accordion-item">
+        <summary>
+          <span class="font-mono text-xs text-purple-400 w-8 flex-shrink-0">Q4</span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 flex-shrink-0">🔴 필수</span>
+          <span class="flex-1 text-sm font-medium">"결재 승인 완료 시 자동 롤백 및 업데이트"는 어느 쪽 의미인가요?</span>
+        </summary>
+        <div class="accordion-body">
+          <p><span class="text-slate-400">선택지:</span> A) 승인된 수정/환불 내용을 주문·매출·정산에 소급 반영(재계산) / B) A + 이미 반영된 결재를 취소하고 이전 상태로 복원하는 역처리 기능까지 포함</p>
+          <p class="mt-2 text-amber-300/90"><span class="text-slate-400">영향:</span> 이벤트 원장 설계로 A/B 모두 수용 가능하나, B는 취소 결재 UI + 역방향 보상 이벤트가 추가 범위 +1~2주.</p>
+        </div>
+      </details>
+      <details class="accordion-item">
+        <summary>
+          <span class="font-mono text-xs text-purple-400 w-8 flex-shrink-0">Q5</span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 flex-shrink-0">🔴 필수</span>
+          <span class="flex-1 text-sm font-medium">결재 승인선 구조는 어떻게 되나요? (고정 vs 조건부)</span>
+        </summary>
+        <div class="accordion-body">
+          <p><span class="text-slate-400">선택지:</span> A) 결재 유형별 고정 승인선 (예: 환불 = 팀장→재무→대표) / B) 금액 구간·부서·주문 유형 조건부 승인선 + 대결(위임)/전결 필요</p>
+          <p class="mt-2 text-amber-300/90"><span class="text-slate-400">영향:</span> 결재 엔진 복잡도 2~3배 차이. 설정형 결재선으로 설계하되 B 전체를 1차 반영 시 +2주. 대결/전결은 필요 여부만 우선 확인.</p>
+        </div>
+      </details>
+      <details class="accordion-item">
+        <summary>
+          <span class="font-mono text-xs text-purple-400 w-8 flex-shrink-0">Q6</span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 flex-shrink-0">🔴 필수</span>
+          <span class="flex-1 text-sm font-medium">프리랜서/인플루언서가 시스템에 로그인하나요?</span>
+        </summary>
+        <div class="accordion-body">
+          <p><span class="text-slate-400">선택지:</span> A) 아니오 — 내부 임직원 전용, 프리랜서는 관리 대상 데이터 / B) 예 — 작업 확인·지급 명세서 조회용 외부 포털 필요</p>
+          <p class="mt-2 text-amber-300/90"><span class="text-slate-400">영향:</span> B면 사용자 수·권한 체계·화면·개인정보 접점이 대폭 증가 +3~4주 → 1차 범위 제외 후 Phase 2 분리 권고.</p>
+        </div>
+      </details>
+      <details class="accordion-item">
+        <summary>
+          <span class="font-mono text-xs text-purple-400 w-8 flex-shrink-0">Q10</span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 flex-shrink-0">🔴 필수</span>
+          <span class="flex-1 text-sm font-medium">전자세금계산서 발행 벤더와 인증 상태는 어떻게 되나요?</span>
+        </summary>
+        <div class="accordion-body">
+          <p><span class="text-slate-400">선택지:</span> A) 이미 사용 중인 ASP 있음 (팝빌·바로빌 등 — 벤더명 회신 요청) / B) 미선정 — 홈택스 직접 발행 중</p>
+          <p class="mt-2 text-amber-300/90"><span class="text-slate-400">영향:</span> B면 벤더 선정·계약·사업자 인증서 절차의 대기 시간 발생. 1차는 발행 요청/상태 관리까지, 완전 자동 발행은 2차 권고. 벤더 이용료 부담 주체도 확인.</p>
+        </div>
+      </details>
+      <details class="accordion-item">
+        <summary>
+          <span class="font-mono text-xs text-purple-400 w-8 flex-shrink-0">Q14</span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 flex-shrink-0">🔴 필수</span>
+          <span class="flex-1 text-sm font-medium">현재 엑셀 양식 전체 + 실제 주문/부분환불/재결제/정산 사례 5~10건을 계약 후 1주 내 제공 가능한가요?</span>
+        </summary>
+        <div class="accordion-body">
+          <p><span class="text-slate-400">선택지:</span> A) 예 — 1주 내 제공 (개인정보 마스킹 가능) / B) 준비 필요 — 제공 가능 시점 회신 (N주)</p>
+          <p class="mt-2 text-amber-300/90"><span class="text-slate-400">영향:</span> 정산 로직·"자동 롤백" 정의 검증의 유일한 근거 데이터. 지연되면 1개월 차 기획/디자인 완료 마일스톤이 그대로 밀립니다 (일정 1:1 지연).</p>
+        </div>
+      </details>
+      <details class="accordion-item">
+        <summary>
+          <span class="font-mono text-xs text-purple-400 w-8 flex-shrink-0">Q11</span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] bg-amber-500/20 text-amber-300 flex-shrink-0">🟡 중요</span>
+          <span class="flex-1 text-sm font-medium">공식 API가 없는 플랫폼에 대해 판매자 계정 제공 + 브라우저 자동화(Playwright 크롤링)를 수용하시나요?</span>
+        </summary>
+        <div class="accordion-body">
+          <p><span class="text-slate-400">선택지:</span> A) 예 — 계정 제공, 약관·차단 리스크 인지·수용 (실패 시 엑셀 대체 경로 상시 유지) / B) 아니오 — 해당 플랫폼은 엑셀 업로드로 운영</p>
+          <p class="mt-2 text-amber-300/90"><span class="text-slate-400">영향:</span> 크롤링 워커(Node.js Playwright) 포함 여부. A여도 1차는 안정성 검증된 1~2개 플랫폼만 — 화면 변경·캡차 운영 리스크는 잔존.</p>
+        </div>
+      </details>
+      <details class="accordion-item">
+        <summary>
+          <span class="font-mono text-xs text-purple-400 w-8 flex-shrink-0">Q16</span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] bg-amber-500/20 text-amber-300 flex-shrink-0">🟡 중요</span>
+          <span class="flex-1 text-sm font-medium">검수 완료 판정 기준과 하자보수 기간을 계약서에 명시하는 방식에 동의하시나요?</span>
+        </summary>
+        <div class="accordion-body">
+          <p><span class="text-slate-400">선택지:</span> A) 예 — 15주차 통합 테스트 시나리오(주문→배정→결재→정산→대시보드) 통과를 검수 기준으로 하고 무상 하자보수 N개월 명시 / B) 자체 검수 기준 별도 보유 (공유 요청)</p>
+          <p class="mt-2 text-amber-300/90"><span class="text-slate-400">영향:</span> 검수 기준 부재 시 오픈 지연·분쟁 리스크. 14주차 기능 개발 Freeze(신규 요구는 Phase 2 백로그) 원칙도 함께 합의.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="mt-6 text-center">
+      <a href="#cta" class="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition border border-purple-500/30">
+        이 질문들, 미팅에서 함께 정리해요
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </a>
+    </div>
+  </section>
+
+  <!-- =========== RISKS — 리스크 매트릭스 (경쟁자 없음) =========== -->
+  <section id="risks" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="mb-10">
+      <div class="inline-flex items-center gap-2 text-xs font-mono text-red-400 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span>
+        07 · RISKS
+        <span class="rounded-full px-2 py-0.5 bg-red-500/20 text-red-300 text-[10px] font-semibold">
+          보너스 자료
+        </span>
+      </div>
+      <h2 class="text-4xl md:text-5xl font-bold leading-tight">이미 식별한 17개 리스크</h2>
+      <p class="mt-3 text-lg text-slate-300">
+        이 프로젝트의 리스크는 기술 난이도보다 <span class="text-red-300 font-semibold">"미확정 상태로 개발에 진입하는 것"</span> 자체에 몰려 있습니다 — 전부 착수 전~4주차에 해소 가능합니다
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <!-- Scatter matrix -->
+      <div class="lg:col-span-3 rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">확률 × 영향 매트릭스 (1~5 · 점수 = 확률×영향, 최대 25)</h3>
+          <div class="flex items-center gap-3 text-xs text-slate-400">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-red-500"></span>Critical 15+
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>High 10~14
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-slate-500"></span>≤ 9
+            </span>
+          </div>
+        </div>
+        <div class="relative h-96">
+          <canvas id="chart-risks"></canvas>
+        </div>
+        <p class="mt-2 text-xs text-slate-500 text-center">각 점을 클릭하면 대응 전략이 우측 패널로 열립니다 · R1~R17 = 리스크 분석서 §1 전 행</p>
+      </div>
+
+      <!-- Top risks list -->
+      <div class="lg:col-span-2 space-y-3">
+        <h3 class="font-semibold mb-3">Critical 4 + 꼬리 리스크 1 — 집중 대응</h3>
+        <button class="w-full text-left rounded-2xl p-4 backdrop-blur-3xl bg-white/5 border border-red-500/25 hover:bg-white/10 transition risk-card" data-risk="R1">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-xs text-red-300">R1 · 범위</span>
+            <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 font-mono">20/25</span>
+          </div>
+          <div class="mt-1.5 text-sm font-semibold">기획 아이디어 단계 + 정산 정책 미확정</div>
+          <div class="mt-1 text-xs text-slate-400">미팅 첫날 결정해야 할 최대 변수 — 실제 사례 5~10건 확보로 회피</div>
+        </button>
+        <button class="w-full text-left rounded-2xl p-4 backdrop-blur-3xl bg-white/5 border border-red-500/25 hover:bg-white/10 transition risk-card" data-risk="R2">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-xs text-red-300">R2 · 범위</span>
+            <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 font-mono">16/25</span>
+          </div>
+          <div class="mt-1.5 text-sm font-semibold">"풀스펙 자동화" 기대 vs Phase 1 범위</div>
+          <div class="mt-1 text-xs text-slate-400">자동화/수동화 구분표를 계약 문서에 첨부해 기대치 공식 단계화</div>
+        </button>
+        <button class="w-full text-left rounded-2xl p-4 backdrop-blur-3xl bg-white/5 border border-red-500/25 hover:bg-white/10 transition risk-card" data-risk="R6">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-xs text-red-300">R6 · 기술</span>
+            <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 font-mono">16/25</span>
+          </div>
+          <div class="mt-1.5 text-sm font-semibold">외부 판매 플랫폼 API 불확실</div>
+          <div class="mt-1 text-xs text-slate-400">3~4주차 PoC 전진 배치 · 확인 전까지 엑셀 업로드 기준선 고정</div>
+        </button>
+        <button class="w-full text-left rounded-2xl p-4 backdrop-blur-3xl bg-white/5 border border-red-500/25 hover:bg-white/10 transition risk-card" data-risk="R13">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-xs text-red-300">R13 · 일정</span>
+            <span class="rounded-full px-2 py-0.5 text-[10px] bg-red-500/20 text-red-300 font-mono">16/25</span>
+          </div>
+          <div class="mt-1.5 text-sm font-semibold">14주차 기능 Freeze 붕괴</div>
+          <div class="mt-1 text-xs text-slate-400">제안 단계 Freeze 선언 + 신규 요구 Phase 2 백로그 분리</div>
+        </button>
+        <button class="w-full text-left rounded-2xl p-4 backdrop-blur-3xl bg-white/5 border border-amber-500/25 hover:bg-white/10 transition risk-card" data-risk="R8">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-xs text-amber-300">R8 · 기술 — 꼬리 리스크</span>
+            <span class="rounded-full px-2 py-0.5 text-[10px] bg-amber-500/20 text-amber-300 font-mono">10/25</span>
+          </div>
+          <div class="mt-1.5 text-sm font-semibold">7연쇄·정산 재계산 정합성 결함</div>
+          <div class="mt-1 text-xs text-slate-400">확률 하 × 영향 최상 — 확률이 낮은 이유는 아키텍처가 처음부터 이를 위해 선택되었기 때문</div>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== ARCHITECTURE — Stack / ADR / Code / OpenAPI (경쟁자 없음) =========== -->
+  <section id="architecture" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="mb-10">
+      <div class="inline-flex items-center gap-2 text-xs font-mono text-cyan-400 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+        08 · ARCHITECTURE
+        <span class="rounded-full px-2 py-0.5 bg-cyan-500/20 text-cyan-300 text-[10px] font-semibold">
+          보너스 자료
+        </span>
+      </div>
+      <h2 class="text-4xl md:text-5xl font-bold leading-tight">이미 설계가 끝났습니다</h2>
+      <p class="mt-3 text-lg text-slate-300">
+        EPM 요구분석 + RSM 도메인 설계 + ADR 8건 + TypeScript 행위 명세 + API 33개 — 구현 전 의사결정 완료
+      </p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="rounded-2xl backdrop-blur-3xl bg-white/5 border border-white/10 overflow-hidden">
+      <div class="flex border-b border-white/10 overflow-x-auto" role="tablist" id="arch-tabs">
+        <button class="arch-tab-trigger flex-1 min-w-[120px] px-6 py-4 font-semibold text-sm text-cyan-400 bg-white/5 border-b-2 border-cyan-400" data-tab="stack" role="tab" aria-selected="true">
+          기술 스택 · 12모듈
+        </button>
+        <button class="arch-tab-trigger flex-1 min-w-[120px] px-6 py-4 font-semibold text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-200" data-tab="adrs" role="tab" aria-selected="false">
+          ADR 8건
+        </button>
+        <button class="arch-tab-trigger flex-1 min-w-[120px] px-6 py-4 font-semibold text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-200" data-tab="code" role="tab" aria-selected="false">
+          도메인 코드
+        </button>
+        <button class="arch-tab-trigger flex-1 min-w-[120px] px-6 py-4 font-semibold text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-200" data-tab="api" role="tab" aria-selected="false">
+          OpenAPI 미리보기
+        </button>
+      </div>
+
+      <!-- Tab: Stack + 12 modules diagram -->
+      <div class="arch-tab-panel p-6 md:p-8" data-panel="stack">
+        <!-- 왜 이 조합인가 — 3안 비교 후 선정 (사용자 마일스톤 §3 핵심 판단 · §5 비교) -->
+        <div class="mb-8 rounded-2xl p-5 md:p-6 bg-gradient-to-br from-cyan-500/10 to-purple-500/5 border border-cyan-500/25">
+          <div class="flex items-center gap-2 text-xs font-mono text-cyan-400 mb-3">
+            <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+            왜 이 조합인가 — 3안 비교 후 선정
+          </div>
+          <blockquote class="text-sm md:text-base text-slate-200 leading-relaxed border-l-2 border-cyan-400/50 pl-4">
+            메인 ERP 백엔드는 <span class="font-semibold text-cyan-200">Spring Boot 모듈형 모놀리식</span>으로 안정적으로 구축하고,
+            결제내역 수집·크롤링처럼 브라우저 자동화가 필요한 영역은 <span class="font-semibold text-pink-200">Node.js Playwright 워커</span>로 분리합니다.
+            공식 API가 있는 기능은 API 연동을 우선하고, 없거나 불안정한 기능은 엑셀 업로드·반자동 수집으로 1차 구현한 뒤
+            운영 안정성과 비용 대비 효과를 기준으로 자동화 범위를 단계적으로 확장합니다.
+            <span class="block mt-2 text-xs text-slate-500">— 사용자 마일스톤 문서 §3 핵심 판단</span>
+          </blockquote>
+
+          <!-- 3안 비교 카드 -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
+            <div class="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/30">
+              <div class="flex items-center gap-2 mb-1.5">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                <span class="font-semibold text-sm text-emerald-200">Spring Boot 모듈형 모놀리식</span>
+              </div>
+              <div class="text-[11px] font-mono text-emerald-400/80 mb-2">✅ 채택 — 메인 ERP 백엔드</div>
+              <ul class="space-y-1.5 text-xs text-slate-300">
+                <li class="flex items-start gap-1.5"><span class="w-1 h-1 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span><span><span class="font-mono text-emerald-300">@Transactional</span> 단일 커밋 — 7연쇄 정합성 구조적 보증</span></li>
+                <li class="flex items-start gap-1.5"><span class="w-1 h-1 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span><span>BigDecimal 금액 계산 · Spring Security 권한</span></li>
+                <li class="flex items-start gap-1.5"><span class="w-1 h-1 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span><span>국내 SI 인력 수급 · 단일 커밋 정합성</span></li>
+              </ul>
+            </div>
+            <div class="rounded-xl p-4 bg-amber-500/10 border border-amber-500/30">
+              <div class="flex items-center gap-2 mb-1.5">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+                <span class="font-semibold text-sm text-amber-200">Node.js 풀스택 통일</span>
+              </div>
+              <div class="text-[11px] font-mono text-amber-400/80 mb-2">⚠️ 워커로만 채택</div>
+              <ul class="space-y-1.5 text-xs text-slate-300">
+                <li class="flex items-start gap-1.5"><span class="w-1 h-1 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></span><span>개발 속도·크롤링 생태계(Playwright)는 강점</span></li>
+                <li class="flex items-start gap-1.5"><span class="w-1 h-1 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></span><span>금액 계산·트랜잭션은 더 많은 주의 필요</span></li>
+                <li class="flex items-start gap-1.5"><span class="w-1 h-1 rounded-full bg-amber-400 mt-1.5 flex-shrink-0"></span><span>구조 편차 리스크 → <span class="text-amber-200">수집 워커에 적임</span></span></li>
+              </ul>
+            </div>
+            <div class="rounded-xl p-4 bg-red-500/10 border border-red-500/30">
+              <div class="flex items-center gap-2 mb-1.5">
+                <i data-lucide="x" class="w-4 h-4 text-red-400"></i>
+                <span class="font-semibold text-sm text-red-200">MSA (Kafka·CQRS)</span>
+              </div>
+              <div class="text-[11px] font-mono text-red-400/80 mb-2">❌ 의도적 배제</div>
+              <ul class="space-y-1.5 text-xs text-slate-300">
+                <li class="flex items-start gap-1.5"><span class="w-1 h-1 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></span><span>120일·6,000만원에 분산 트랜잭션은 과설계</span></li>
+                <li class="flex items-start gap-1.5"><span class="w-1 h-1 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></span><span>사가·CQRS는 정합성 검증 비용 급증</span></li>
+                <li class="flex items-start gap-1.5"><span class="w-1 h-1 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></span><span>소규모 팀 운영 인력 요구 과다 — 정합성 리스크↑</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 적재적소 미니 다이어그램 -->
+          <div class="mt-5 rounded-xl p-4 bg-slate-900/50 border border-white/10">
+            <div class="text-[11px] font-mono text-slate-400 mb-3 text-center">적재적소 — vs가 아니라 역할 분담</div>
+            <div class="flex flex-col md:flex-row items-stretch gap-3">
+              <div class="flex-1 rounded-lg px-4 py-3 bg-cyan-500/10 border border-cyan-500/30">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="box" class="w-4 h-4 text-cyan-300"></i>
+                  <span class="font-semibold text-sm text-cyan-200">Spring Boot 코어</span>
+                </div>
+                <p class="text-xs text-slate-300">주문·결재·정산 — <span class="text-cyan-200">단일 트랜잭션</span>으로 금액 정합성 보증</p>
+              </div>
+              <div class="flex items-center justify-center text-slate-500">
+                <i data-lucide="arrow-right" class="w-5 h-5 hidden md:block"></i>
+                <i data-lucide="arrow-down" class="w-5 h-5 md:hidden"></i>
+              </div>
+              <div class="flex-1 rounded-lg px-4 py-3 bg-pink-500/10 border border-pink-500/30">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="bot" class="w-4 h-4 text-pink-300"></i>
+                  <span class="font-semibold text-sm text-pink-200">Node.js Playwright 워커</span>
+                </div>
+                <p class="text-xs text-slate-300">외부 수집 — 별도 컨테이너·장애 격리·원본 import batch 보관</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- DB 설계 원칙 7종 -->
+          <div class="mt-5">
+            <div class="flex items-center gap-2 text-xs font-mono text-emerald-400 mb-2">
+              <i data-lucide="database" class="w-3.5 h-3.5"></i>
+              DB 설계 원칙 7종 — 정산이 꼬이지 않는 구조 (§12.4)
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs bg-white/5 border border-white/10 text-slate-300"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>원본/가공 데이터 분리</span>
+              <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs bg-white/5 border border-white/10 text-slate-300"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>환불은 이벤트 기록 (덮어쓰기 금지)</span>
+              <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs bg-white/5 border border-white/10 text-slate-300"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>정산 재계산 이력 저장</span>
+              <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs bg-white/5 border border-white/10 text-slate-300"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>결재 승인 후에만 재무 반영</span>
+              <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs bg-white/5 border border-white/10 text-slate-300"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>AI 결과는 검수 후 반영</span>
+              <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs bg-white/5 border border-white/10 text-slate-300"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>import batch 원본 보관</span>
+              <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs bg-white/5 border border-white/10 text-slate-300"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>전 변경 감사 로그</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4 text-sm text-slate-400">모듈형 모놀리식 — 단일 배포 단위 안에서 12개 모듈 경계 유지 · 7연쇄는 단일 트랜잭션으로 보증</div>
+
+        <!-- Layer 1: Client -->
+        <div class="flex justify-center">
+          <div class="w-full max-w-md rounded-2xl px-5 py-4 bg-gradient-to-br from-purple-500/20 to-pink-500/10 border border-purple-500/30 flex items-center justify-center gap-3 shadow-lg shadow-purple-500/20">
+            <i data-lucide="monitor-smartphone" class="w-5 h-5 text-purple-300"></i>
+            <div class="text-center">
+              <div class="font-semibold">React 18 + TypeScript</div>
+              <div class="text-xs text-slate-400 mt-0.5">PC 최적화 · 태블릿/모바일 조회 반응형</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-center my-3">
+          <i data-lucide="arrow-down" class="w-4 h-4 text-slate-600"></i>
+          <div class="text-[10px] font-mono text-slate-500 mt-1">HTTPS · Nginx (/api 프록시 + 정적 자산)</div>
+        </div>
+
+        <!-- Layer 2: Spring Boot 12 modules -->
+        <div class="rounded-2xl p-5 bg-cyan-500/5 border border-cyan-500/30 shadow-lg shadow-cyan-500/10">
+          <div class="flex items-center justify-center gap-2 text-xs font-mono text-cyan-400 mb-4">
+            <i data-lucide="box" class="w-3.5 h-3.5"></i>
+            Spring Boot 3.x (Java 21) — 모듈형 모놀리식 · 단일 배포 단위 (ADR-001)
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 text-center"><div class="text-xs font-semibold font-mono">auth</div><div class="text-[10px] text-slate-500 mt-0.5">JWT · RBAC</div></div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 text-center"><div class="text-xs font-semibold font-mono">org</div><div class="text-[10px] text-slate-500 mt-0.5">부서·직급·직원</div></div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 text-center"><div class="text-xs font-semibold font-mono">order</div><div class="text-[10px] text-slate-500 mt-0.5">주문·수집·그룹화</div></div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 text-center"><div class="text-xs font-semibold font-mono">work</div><div class="text-[10px] text-slate-500 mt-0.5">작업·칸반·배정</div></div>
+            <div class="rounded-lg px-3 py-2 bg-purple-500/10 border border-purple-500/30 text-center"><div class="text-xs font-semibold font-mono text-purple-300">approval</div><div class="text-[10px] text-slate-500 mt-0.5">기안·승인선·7연쇄</div></div>
+            <div class="rounded-lg px-3 py-2 bg-purple-500/10 border border-purple-500/30 text-center"><div class="text-xs font-semibold font-mono text-purple-300">settlement</div><div class="text-[10px] text-slate-500 mt-0.5">매출 원장·정산·명세서</div></div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 text-center"><div class="text-xs font-semibold font-mono">freelancer</div><div class="text-[10px] text-slate-500 mt-0.5">마스터·평가</div></div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 text-center"><div class="text-xs font-semibold font-mono">integration</div><div class="text-[10px] text-slate-500 mt-0.5">연동·세금계산서</div></div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 text-center"><div class="text-xs font-semibold font-mono">notification</div><div class="text-[10px] text-slate-500 mt-0.5">알림·이메일·재시도</div></div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 text-center"><div class="text-xs font-semibold font-mono">audit</div><div class="text-[10px] text-slate-500 mt-0.5">감사 로그 AOP</div></div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-white/10 text-center"><div class="text-xs font-semibold font-mono">dashboard</div><div class="text-[10px] text-slate-500 mt-0.5">손익 집계 뷰</div></div>
+            <div class="rounded-lg px-3 py-2 bg-white/5 border border-dashed border-white/20 text-center"><div class="text-xs font-semibold font-mono text-slate-400">ai-automation</div><div class="text-[10px] text-slate-500 mt-0.5">Phase 2+ (ADR-004)</div></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 my-3 text-center">
+          <i data-lucide="arrow-down" class="w-4 h-4 text-slate-600 mx-auto"></i>
+          <i data-lucide="arrow-down" class="w-4 h-4 text-slate-600 mx-auto"></i>
+          <i data-lucide="arrow-down" class="w-4 h-4 text-slate-600 mx-auto"></i>
+        </div>
+
+        <!-- Layer 3 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="rounded-xl p-4 bg-emerald-500/5 border border-emerald-500/30">
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="database" class="w-4 h-4 text-emerald-400"></i>
+              <span class="font-semibold text-sm">PostgreSQL 15+ (RDS)</span>
+            </div>
+            <ul class="space-y-1.5 text-xs text-slate-300">
+              <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>단일 DB · 스키마 모듈 경계</li>
+              <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>JSONB — 감사 로그 전/후 값</li>
+              <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>낙관적 잠금 (@Version)</li>
+            </ul>
+          </div>
+          <div class="rounded-xl p-4 bg-pink-500/5 border border-pink-500/30">
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="bot" class="w-4 h-4 text-pink-400"></i>
+              <span class="font-semibold text-sm">Node.js 20 + Playwright 워커</span>
+            </div>
+            <ul class="space-y-1.5 text-xs text-slate-300">
+              <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-pink-400"></span>별도 컨테이너 — 장애 격리 (ADR-005)</li>
+              <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-pink-400"></span>수집 → 원본 저장 → 내부 API 전달</li>
+              <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-pink-400"></span>실패 시 엑셀 대체 경로 상시 유지</li>
+            </ul>
+          </div>
+          <div class="rounded-xl p-4 bg-amber-500/5 border border-amber-500/30">
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="cloud" class="w-4 h-4 text-amber-400"></i>
+              <span class="font-semibold text-sm">외부 서비스</span>
+            </div>
+            <ul class="space-y-1.5 text-xs text-slate-300">
+              <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-amber-400"></span>S3 호환 스토리지 — 엑셀 원본/첨부</li>
+              <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-amber-400"></span>SMTP/SES 이메일</li>
+              <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-amber-400"></span>세금계산서 ASP (1차: 요청/상태)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Stack table -->
+        <div class="mt-6 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-slate-400 border-b border-white/10">
+                <th class="py-3 px-2">계층</th>
+                <th class="py-3 px-2">선택</th>
+                <th class="py-3 px-2">근거</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-300">
+              <tr class="border-b border-white/5"><td class="py-2.5 px-2 text-xs text-slate-400">언어(백엔드)</td><td class="py-2.5 px-2 font-mono text-xs text-cyan-300">Java 21 (LTS)</td><td class="py-2.5 px-2 text-xs">BigDecimal 금액 계산 · 성숙한 트랜잭션/보안 생태계 · 국내 ERP 인력 수급</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2.5 px-2 text-xs text-slate-400">프레임워크</td><td class="py-2.5 px-2 font-mono text-xs text-cyan-300">Spring Boot 3.x</td><td class="py-2.5 px-2 text-xs">@Transactional 7연쇄 원자성 · Spring Security RBAC · Scheduler/Batch 내장</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2.5 px-2 text-xs text-slate-400">프론트엔드</td><td class="py-2.5 px-2 font-mono text-xs text-cyan-300">React 18 + TypeScript</td><td class="py-2.5 px-2 text-xs">칸반·결재·대시보드 상호작용 화면 다수 · 도메인 모델(domain/*.ts) 타입 공유</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2.5 px-2 text-xs text-slate-400">DB</td><td class="py-2.5 px-2 font-mono text-xs text-cyan-300">PostgreSQL 15+</td><td class="py-2.5 px-2 text-xs">JSONB(감사 로그·오류 행) · 파티셔닝 여지 · RDS/NCP 매니지드</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2.5 px-2 text-xs text-slate-400">ORM</td><td class="py-2.5 px-2 font-mono text-xs text-cyan-300">Spring Data JPA + QueryDSL</td><td class="py-2.5 px-2 text-xs">낙관적 잠금(@Version) 내장 · 복잡 집계는 네이티브</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2.5 px-2 text-xs text-slate-400">인증</td><td class="py-2.5 px-2 font-mono text-xs text-cyan-300">Spring Security + JWT</td><td class="py-2.5 px-2 text-xs">무상태 API · 액세스 30분 + 리프레시 14일 · 역할 기반 인가</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2.5 px-2 text-xs text-slate-400">크롤링/RPA</td><td class="py-2.5 px-2 font-mono text-xs text-cyan-300">Node.js 20 + Playwright</td><td class="py-2.5 px-2 text-xs">브라우저 자동화 생태계 우위 · 별도 프로세스 격리 (ADR-005)</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2.5 px-2 text-xs text-slate-400">캐시</td><td class="py-2.5 px-2 font-mono text-xs text-cyan-300">1차 없음 (필요 시 Caffeine)</td><td class="py-2.5 px-2 text-xs">사용자 수십 명 규모 — Redis는 과설계 (정직한 사이징)</td></tr>
+              <tr><td class="py-2.5 px-2 text-xs text-slate-400">배포/CI</td><td class="py-2.5 px-2 font-mono text-xs text-cyan-300">Docker + AWS/NCP · GitHub Actions</td><td class="py-2.5 px-2 text-xs">공고 요구(클라우드 컨테이너) · 환경변수 분리로 사내 이전 대비</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-4 text-xs text-slate-500">배제 대안: NestJS 풀스택 통일(금액 계산 부동소수점 함정 — 워커 영역만 채택), MSA + Kafka(분산 트랜잭션/사가 — 6,000만원/120일 규모에서 운영 비용이 효익을 압도)</p>
+      </div>
+
+      <!-- Tab: ADRs -->
+      <div class="arch-tab-panel hidden p-6" data-panel="adrs">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="rounded-xl p-5 bg-white/5 border border-white/10 spring-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-mono text-xs text-cyan-400">ADR-001</span>
+              <span class="rounded-full px-2 py-0.5 text-[10px] bg-emerald-500/15 text-emerald-300">채택</span>
+            </div>
+            <h4 class="font-semibold text-sm mb-2">모듈형 모놀리식 (MSA·Kafka·과도한 DDD 배제)</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">7연쇄가 서비스 경계를 넘으면 분산 트랜잭션/사가 필요 — 모놀리식 + @Transactional이 원자성을 가장 값싸게 보증. 12개 모듈 패키지 경계는 유지해 향후 분리 여지 보존.</p>
+          </div>
+          <div class="rounded-xl p-5 bg-white/5 border border-white/10 spring-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-mono text-xs text-cyan-400">ADR-002</span>
+              <span class="rounded-full px-2 py-0.5 text-[10px] bg-emerald-500/15 text-emerald-300">채택</span>
+            </div>
+            <h4 class="font-semibold text-sm mb-2">환불/재결제는 덮어쓰기가 아니라 이벤트 기록 (매출 원장)</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">original_amount 불변 · 결제/환불/재결제를 부호 이벤트로 적재 · 매출은 항상 합산. "자동 롤백"이 소급 반영이든 원상 복원이든 둘 다 수용 — 어느 시점 매출도 재현 가능.</p>
+          </div>
+          <div class="rounded-xl p-5 bg-white/5 border border-white/10 spring-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-mono text-xs text-cyan-400">ADR-003</span>
+              <span class="rounded-full px-2 py-0.5 text-[10px] bg-emerald-500/15 text-emerald-300">채택</span>
+            </div>
+            <h4 class="font-semibold text-sm mb-2">재무 반영은 결재 최종 승인 후에만 — 7연쇄 단일 TX + 알림 분리</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">기안 시점 재무 무변경. 연쇄 1~6 단일 트랜잭션, 연쇄 7(알림)은 커밋 후 비동기 + 재시도 3회. 동시 승인은 낙관적 잠금으로 차단 — 부분 성공이 구조적으로 불가능.</p>
+          </div>
+          <div class="rounded-xl p-5 bg-white/5 border border-white/10 spring-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-mono text-xs text-cyan-400">ADR-004</span>
+              <span class="rounded-full px-2 py-0.5 text-[10px] bg-emerald-500/15 text-emerald-300">채택</span>
+            </div>
+            <h4 class="font-semibold text-sm mb-2">AI 파싱 결과는 후보 데이터로 저장, 담당자 검수 후 반영</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">Phase 2+ LLM 파싱은 ai_parse_results(후보)에만 적재 — 검수·승인 후 본 테이블 반영. LLM 오추출이 재무 데이터에 직행하지 않도록. 개인정보 마스킹 후 외부 전송.</p>
+          </div>
+          <div class="rounded-xl p-5 bg-white/5 border border-white/10 spring-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-mono text-xs text-cyan-400">ADR-005</span>
+              <span class="rounded-full px-2 py-0.5 text-[10px] bg-emerald-500/15 text-emerald-300">채택</span>
+            </div>
+            <h4 class="font-semibold text-sm mb-2">크롤링/RPA는 Node.js Playwright 워커로 분리</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">크롤링의 불안정성(화면 변경·캡차)을 프로세스 경계로 격리. 워커 장애가 ERP 가용성에 무영향 · 실패 시 엑셀 업로드 대체 경로 상시 유지 · 3~4주차 PoC 선검증.</p>
+          </div>
+          <div class="rounded-xl p-5 bg-white/5 border border-white/10 spring-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-mono text-xs text-cyan-400">ADR-006</span>
+              <span class="rounded-full px-2 py-0.5 text-[10px] bg-emerald-500/15 text-emerald-300">채택</span>
+            </div>
+            <h4 class="font-semibold text-sm mb-2">승인선은 설정 데이터로 관리 (하드코딩 금지)</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">approval_line_rules(결재 유형 × 금액 구간 → 승인 역할)를 설정 테이블로. 정책 변경 = 데이터 수정 — 승인선 미확정 리스크를 설계로 흡수. 대결/전결은 범위 제외 명시.</p>
+          </div>
+          <div class="rounded-xl p-5 bg-white/5 border border-white/10 spring-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-mono text-xs text-cyan-400">ADR-007</span>
+              <span class="rounded-full px-2 py-0.5 text-[10px] bg-emerald-500/15 text-emerald-300">채택</span>
+            </div>
+            <h4 class="font-semibold text-sm mb-2">단가 스냅샷 + 정산 확정 후 조정 이벤트</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">배정 시점 단가를 rate_snapshot으로 고정. 정산은 DRAFT→CONFIRMED→PAID 상태기계 — 확정 후 변경은 결재 승인 경유 조정 이벤트로만. 지급명세서 금액이 언제나 재현 가능.</p>
+          </div>
+          <div class="rounded-xl p-5 bg-white/5 border border-white/10 spring-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-mono text-xs text-cyan-400">ADR-008</span>
+              <span class="rounded-full px-2 py-0.5 text-[10px] bg-emerald-500/15 text-emerald-300">채택</span>
+            </div>
+            <h4 class="font-semibold text-sm mb-2">외부 수집 원본은 import batch 단위로 보관 (원본/가공 분리)</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">엑셀/API/크롤링 유입은 전부 import_batches(원본 파일 + 검증 결과 + 오류 행)를 거쳐 orders로 변환 — 정산 분쟁·재처리의 증거. "이 주문이 어디서 왔는가"에 항상 답한다.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Code -->
+      <div class="arch-tab-panel hidden p-6" data-panel="code">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2 text-sm">
+            <i data-lucide="file-code-2" class="w-4 h-4 text-cyan-400"></i>
+            <span class="font-mono text-slate-300">domain/behaviors.ts — RSM 행위 모델 (발췌)</span>
+          </div>
+          <span class="text-xs text-slate-500">후행조건 → 선행조건 → 행위불변식 순 명세</span>
+        </div>
+        <pre class="rounded-xl !bg-slate-950/80 !p-4 text-xs overflow-x-auto"><code class="language-typescript">/**
+ * RSM Step 4 — 행위 모델
+ * 결과중심적 사고: 후행조건 → 선행조건 → 행위불변식 → 수행방법 순서로 명세한다.
+ * 내부 협력은 선언적 명세(불변식 위반 = 프로그램 버그), 사용자 입력은 방어적 명세(예외).
+ */
+
+export enum Actor {
+  ORDER_STAFF = "orderStaff",           // 주문 담당자 (1차 의뢰자)
+  WORK_MANAGER = "workManager",         // 작업 관리자
+  APPROVER = "approver",                // 승인권자 (팀장/재무/대표 역할)
+  FINANCE = "finance",                  // 재무 담당자
+  COLLECTOR_WORKER = "collectorWorker", // 수집 워커 (Playwright)
+}
+
+/** 기안 상신 내역 (UC21) — orderId는 '어떤주문' 선택, 나머지는 값 작성 */
+export interface RefundDraftDetail {
+  readonly orderId: string;             // 객체 선택
+  readonly docType: ApprovalDocType;    // 값 작성 (파워타입 선택)
+  readonly requestAmount: Money;        // 값 작성
+  readonly reason: string;
+  readonly drafterId: string;           // 객체 선택 (로그인 컨텍스트)
+}
+
+/** 결재 처리 내역 (UC22/23) */
+export interface ApprovalDecisionDetail {
+  readonly approvalId: string;
+  readonly stepId: string;
+  readonly decision: "APPROVE" | "REJECT";
+  readonly comment: string;             // REJECT 시 필수 — 방어적 검증
+  readonly approverId: string;
+  readonly expectedVersion: number;     // 낙관적 잠금 (동시 승인 차단)
+}
+
+/** UC22 — 결재 승인 (7연쇄): 최종 승인 시 단일 트랜잭션으로 실행 */
+export const UC22_APPROVE: UseCaseSpec = {
+  epmModelNo: "22",
+  name: "결재 승인 (7연쇄)",
+  actor: Actor.APPROVER,
+  preconditions: ["현 단계 승인권자 = 요청자", "ApprovalDoc=IN_PROGRESS", "version 일치"],
+  postconditions: [
+    "연쇄1: ApprovalDoc=APPROVED",
+    "연쇄2: Order.status = BS0010 매핑 상태",
+    "연쇄3: SalesEvent 적재 + netSales 재계산 이력 — BS0001/BS0007",
+    "연쇄4: 외주비 재계산 이력 (확정 정산은 조정 이벤트) — BS0002/MG1003",
+    "연쇄5: 손익 뷰에 커밋 즉시 반영 — BS0003",
+    "연쇄6: AuditLog(전/후 값) 기록 — MG1004",
+    "연쇄7: 기안자·재무 알림 (커밋 후 비동기) — BS0011",
+  ],
+  invariants: ["연쇄 1~6 원자성 — 하나라도 실패 시 전체 롤백 (MG1001)", "환불 누계 ≤ 결제 누계"],
+};</code></pre>
+        <p class="mt-3 text-xs text-slate-500">React 프론트엔드가 이 타입을 그대로 이식(src/domain/)해 백엔드 DTO 계약과 상태기계를 공유합니다 — 정답 코드가 아니라 "설계 완료의 증거"입니다.</p>
+      </div>
+
+      <!-- Tab: OpenAPI preview -->
+      <div class="arch-tab-panel hidden p-6" data-panel="api">
+        <div class="mb-4 text-sm text-slate-400">핵심 엔드포인트 33개 설계 완료 — 대표 12개 미리보기 (전체는 실행계획 §4.1)</div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="text-left text-slate-400 border-b border-white/10">
+                <th class="py-2.5 px-2">Method</th>
+                <th class="py-2.5 px-2">Path</th>
+                <th class="py-2.5 px-2">설명</th>
+                <th class="py-2.5 px-2">권한</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-300 font-mono">
+              <tr class="border-b border-white/5"><td class="py-2 px-2"><span class="text-emerald-400">POST</span></td><td class="py-2 px-2">/api/auth/login</td><td class="py-2 px-2 font-sans text-slate-400">로그인 (JWT 발급)</td><td class="py-2 px-2 text-slate-500">-</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-2"><span class="text-cyan-400">GET</span></td><td class="py-2 px-2">/api/orders?status=&platform=</td><td class="py-2 px-2 font-sans text-slate-400">주문 목록 (상태/플랫폼/부서/기간 필터)</td><td class="py-2 px-2 text-slate-500">ORDER_READ</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-2"><span class="text-emerald-400">POST</span></td><td class="py-2 px-2">/api/orders/import/validate</td><td class="py-2 px-2 font-sans text-slate-400">엑셀 검증 — 2단계 계약 (검증→확정)</td><td class="py-2 px-2 text-slate-500">ORDER_WRITE</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-2"><span class="text-emerald-400">POST</span></td><td class="py-2 px-2">/api/orders/import/{batchId}/commit</td><td class="py-2 px-2 font-sans text-slate-400">엑셀 등록 확정 — 부분 등록 금지</td><td class="py-2 px-2 text-slate-500">ORDER_WRITE</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-2"><span class="text-emerald-400">POST</span></td><td class="py-2 px-2">/api/tasks/{id}/assignments</td><td class="py-2 px-2 font-sans text-slate-400">작업 배정 (단가 스냅샷 고정)</td><td class="py-2 px-2 text-slate-500">WORK_MANAGE</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-2"><span class="text-amber-400">PATCH</span></td><td class="py-2 px-2">/api/tasks/{id}/status</td><td class="py-2 px-2 font-sans text-slate-400">칸반 상태 변경 (전이표 검증)</td><td class="py-2 px-2 text-slate-500">WORK_WRITE</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-2"><span class="text-emerald-400">POST</span></td><td class="py-2 px-2">/api/approvals</td><td class="py-2 px-2 font-sans text-slate-400">기안 상신 + 승인선 자동 결정 (재무 무변경)</td><td class="py-2 px-2 text-slate-500">ORDER_WRITE</td></tr>
+              <tr class="border-b border-white/5 bg-purple-500/5"><td class="py-2 px-2"><span class="text-emerald-400">POST</span></td><td class="py-2 px-2 text-purple-300">/api/approvals/{id}/decision</td><td class="py-2 px-2 font-sans text-purple-300">승인/반려 — 7연쇄의 진입점 ★</td><td class="py-2 px-2 text-slate-500">현 단계 승인권자</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-2"><span class="text-cyan-400">GET</span></td><td class="py-2 px-2">/api/settlements?period=</td><td class="py-2 px-2 font-sans text-slate-400">정산 목록/미리보기</td><td class="py-2 px-2 text-slate-500">FINANCE</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-2"><span class="text-emerald-400">POST</span></td><td class="py-2 px-2">/api/settlements/{id}/statements</td><td class="py-2 px-2 font-sans text-slate-400">지급명세서 생성 (PDF)</td><td class="py-2 px-2 text-slate-500">FINANCE</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-2"><span class="text-cyan-400">GET</span></td><td class="py-2 px-2">/api/dashboard/profit?by=dept|project</td><td class="py-2 px-2 font-sans text-slate-400">손익 대시보드 (Group By 집계)</td><td class="py-2 px-2 text-slate-500">EXEC/FINANCE</td></tr>
+              <tr><td class="py-2 px-2"><span class="text-cyan-400">GET</span></td><td class="py-2 px-2">/api/audit-logs?entityType=&entityId=</td><td class="py-2 px-2 font-sans text-slate-400">변경 이력 조회</td><td class="py-2 px-2 text-slate-500">ADMIN/관련자</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs text-slate-400 mb-2 font-mono">Request — POST /api/approvals/{id}/decision</div>
+            <pre class="rounded-xl !bg-slate-950/80 !p-4 text-xs overflow-x-auto"><code class="language-typescript">{
+  "stepId": "9f0e...",
+  "decision": "APPROVE",
+  "comment": "미진행분 확인 완료",
+  "expectedVersion": 3
+}</code></pre>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 mb-2 font-mono">Response 200 — 7연쇄 결과 요약</div>
+            <pre class="rounded-xl !bg-slate-950/80 !p-4 text-xs overflow-x-auto"><code class="language-typescript">{
+  "approvalStatus": "APPROVED",
+  "chain": {
+    "orderStatus": "PARTIALLY_REFUNDED",
+    "sales": { "salesRecalcId": "5c1a...", "netSales": 800000 },
+    "settlement": { "settlementRecalcId": "77b2...", "payoutTotal": 420000 }
+  }
+}</code></pre>
+          </div>
+        </div>
+        <p class="mt-3 text-xs text-slate-500">
+          에러 계약: 403 승인 권한 없음 · 409 version 불일치(동시 승인) · 422 환불 누계 초과 · 500 연쇄 실패 — <span class="text-slate-300">"데이터는 변경되지 않았습니다"</span> (전체 롤백)
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== TIMELINE — 17주 실행계획 (경쟁자 없음) =========== -->
+  <section id="timeline" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="mb-10">
+      <div class="inline-flex items-center gap-2 text-xs font-mono text-emerald-400 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        09 · TIMELINE
+        <span class="rounded-full px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold">
+          보너스 자료
+        </span>
+      </div>
+      <h2 class="text-4xl md:text-5xl font-bold leading-tight">120일, 17주 실행계획</h2>
+      <p class="mt-3 text-lg text-slate-300">
+        주차별 작업·산출물·검증 기준까지 이미 설계 완료 — 공고의 "1개월 기획 / 3개월 핵심 개발 / 4개월 검수·이관"이 M1·M4·M6에 정확히 대응합니다
+      </p>
+    </div>
+
+    <!-- Gantt -->
+    <div class="rounded-2xl p-6 backdrop-blur-3xl bg-white/5 border border-white/10 overflow-x-auto">
+      <div class="min-w-[900px]">
+        <!-- Week header -->
+        <div class="grid gap-1 mb-2 text-[10px] font-mono text-slate-500 text-center" style="grid-template-columns: 140px repeat(18, 1fr);">
+          <div class="text-left text-slate-400">Phase / 주차</div>
+          <div>W0</div><div>W1</div><div>W2</div><div>W3</div><div>W4</div><div>W5</div><div>W6</div><div>W7</div><div>W8</div>
+          <div>W9</div><div>W10</div><div>W11</div><div>W12</div><div>W13</div><div class="text-amber-300">W14</div><div>W15</div><div>W16</div><div>W17</div>
+        </div>
+
+        <!-- Milestone markers -->
+        <div class="grid gap-1 mb-3 items-center" style="grid-template-columns: 140px repeat(18, 1fr);">
+          <div class="text-[10px] text-amber-300/80 font-mono">마일스톤 M1~M6</div>
+          <div></div><div></div>
+          <div class="milestone-marker" title="M1 · 2주차 말 — 요구 확정 + 화면 컨펌 (프로토타입 20종 시연)">M1</div>
+          <div></div>
+          <div class="milestone-marker" title="M2 · 4주차 말 — 설계 확정 + 연동 PoC 결과서 (ERD·테이블 정의서)">M2</div>
+          <div></div><div></div><div></div>
+          <div class="milestone-marker" title="M3 · 8주차 말 — 공통/권한/주문/작업 완료 (엑셀 업로드→배정→칸반)">M3</div>
+          <div></div><div></div><div></div>
+          <div class="milestone-marker" title="M4 · 12주차 말 — 결재·정산 완료, 7연쇄 통합 테스트 통과 + 실제 사례 금액 재현 일치">M4</div>
+          <div></div><div></div>
+          <div class="milestone-marker" title="M5 · 15주차 말 — 기능 Freeze + 통합 테스트 전건 통과 (필수 케이스 10종)">M5</div>
+          <div></div>
+          <div class="milestone-marker" title="M6 · 17주차 말 — 검수 확인서 + 운영 배포 + 산출물 5종 인도">M6</div>
+        </div>
+
+        <!-- P1 -->
+        <div class="grid gap-1 mb-1.5 items-center" style="grid-template-columns: 140px repeat(18, 1fr);">
+          <div class="text-xs text-purple-300 font-semibold">P1 설계·기반</div>
+          <div class="gantt-bar gantt-bar-p1" style="grid-column: 2 / 4;" title="W0~1: 범위 확정 · 실제 사례 5~10건 확보 · 정산/승인선 정책 인터뷰">
+            <span class="absolute inset-0 flex items-center px-2 text-[10px] text-white/90 whitespace-nowrap overflow-hidden">범위·정책 확정</span>
+          </div>
+          <div class="gantt-bar gantt-bar-p1" style="grid-column: 4 / 5;" title="W2: IA + AI 화면 프로토타입 20종 시연 → 고객 컨펌 (M1)">
+            <span class="absolute inset-0 flex items-center px-2 text-[10px] text-white/90 whitespace-nowrap overflow-hidden">프로토 시연</span>
+          </div>
+          <div class="gantt-bar gantt-bar-p1" style="grid-column: 5 / 7;" title="W3~4: DB/아키텍처 설계 + 외부 연동 PoC 전진 배치 · CI/CD (M2)">
+            <span class="absolute inset-0 flex items-center px-2 text-[10px] text-white/90 whitespace-nowrap overflow-hidden">설계 + PoC ★</span>
+          </div>
+          <div class="gantt-bar gantt-bar-p1" style="grid-column: 7 / 9;" title="W5~6: 로그인 · RBAC · 조직 관리 · 감사 로그 AOP">
+            <span class="absolute inset-0 flex items-center px-2 text-[10px] text-white/90 whitespace-nowrap overflow-hidden">공통/권한</span>
+          </div>
+        </div>
+        <!-- P2 -->
+        <div class="grid gap-1 mb-1.5 items-center" style="grid-template-columns: 140px repeat(18, 1fr);">
+          <div class="text-xs text-pink-300 font-semibold">P2 주문·결재</div>
+          <div class="gantt-bar gantt-bar-p2" style="grid-column: 9 / 11;" title="W7~8: 주문(수기/엑셀 2단계 검증) · 그룹화 · 배정 · 칸반 (M3)">
+            <span class="absolute inset-0 flex items-center px-2 text-[10px] text-white/90 whitespace-nowrap overflow-hidden">주문·작업·칸반</span>
+          </div>
+          <div class="gantt-bar gantt-bar-p2" style="grid-column: 11 / 13;" title="W9~10: 전자결재 — 기안 · 설정형 승인선 · 다단계 승인 · 7연쇄 + ChainIntegrationTest">
+            <span class="absolute inset-0 flex items-center px-2 text-[10px] text-white/90 whitespace-nowrap overflow-hidden">전자결재 7연쇄 ★</span>
+          </div>
+        </div>
+        <!-- P3 (2행 — W12에서 정산·연동이 겹침) -->
+        <div class="grid gap-1 mb-1 items-center" style="grid-template-columns: 140px repeat(18, 1fr);">
+          <div class="text-xs text-emerald-300 font-semibold">P3 정산·연동</div>
+          <div class="gantt-bar gantt-bar-p3" style="grid-column: 13 / 15;" title="W11~12: 정산 — 결제내역 · 매출/외주비 재계산 · 확정 · 지급명세서 · 손익 (M4, BigDecimal 검증)">
+            <span class="absolute inset-0 flex items-center px-2 text-[10px] text-white/90 whitespace-nowrap overflow-hidden">정산·손익</span>
+          </div>
+        </div>
+        <div class="grid gap-1 mb-1.5 items-center" style="grid-template-columns: 140px repeat(18, 1fr);">
+          <div></div>
+          <div class="gantt-bar gantt-bar-p3" style="grid-column: 14 / 16;" title="W12~13: 외부 연동 제품화(PoC 검증분) · 세금계산서 요청/상태 · 수집 워커 — 실패 시 엑셀 대체 경로">
+            <span class="absolute inset-0 flex items-center px-2 text-[10px] text-white/90 whitespace-nowrap overflow-hidden">연동·워커</span>
+          </div>
+        </div>
+        <!-- P4 -->
+        <div class="grid gap-1 items-center" style="grid-template-columns: 140px repeat(18, 1fr);">
+          <div class="text-xs text-cyan-300 font-semibold">P4 검증·오픈</div>
+          <div class="gantt-bar freeze-cell" style="grid-column: 16 / 17;" title="W14: 기능 Freeze — 신규 요구는 Phase 2 백로그 분리 · 마이그레이션 리허설">
+            <span class="absolute inset-0 flex items-center px-2 text-[10px] text-amber-200 whitespace-nowrap overflow-hidden">Freeze 🔒</span>
+          </div>
+          <div class="gantt-bar gantt-bar-p4" style="grid-column: 17 / 18;" title="W15: 통합 테스트 — 12단계 시나리오 + 필수 케이스 10종 전건 통과 (M5)">
+            <span class="absolute inset-0 flex items-center px-2 text-[10px] text-white/90 whitespace-nowrap overflow-hidden">통합TEST</span>
+          </div>
+          <div class="gantt-bar gantt-bar-p4" style="grid-column: 18 / 20;" title="W16~17: 사용자 검수·교육·매뉴얼 → 운영 배포·데이터 이관·안정화 (M6)">
+            <span class="absolute inset-0 flex items-center px-2 text-[10px] text-white/90 whitespace-nowrap overflow-hidden">검수·오픈</span>
+          </div>
+        </div>
+      </div>
+      <p class="mt-4 text-xs text-slate-500">각 바에 마우스를 올리면 작업·산출물·검증 기준이 표시됩니다 · ★ = 이 프로젝트의 승부처 (PoC 전진 배치 · 7연쇄) · 출처: 실행계획 §8~§9</p>
+    </div>
+
+    <!-- Milestones cards -->
+    <div class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="rounded-xl p-4 bg-white/5 border border-white/10 spring-hover">
+        <div class="font-mono text-xs text-amber-300 mb-1">M1 · W2</div>
+        <div class="text-sm font-semibold">요구 확정 + 화면 컨펌</div>
+        <div class="mt-1 text-[11px] text-slate-500">프로토 20종 시연 · 정책 문서화</div>
+      </div>
+      <div class="rounded-xl p-4 bg-white/5 border border-white/10 spring-hover">
+        <div class="font-mono text-xs text-amber-300 mb-1">M2 · W4</div>
+        <div class="text-sm font-semibold">설계 확정 + 연동 PoC</div>
+        <div class="mt-1 text-[11px] text-slate-500">ERD·테이블 정의서 · PoC 결과서</div>
+      </div>
+      <div class="rounded-xl p-4 bg-white/5 border border-white/10 spring-hover">
+        <div class="font-mono text-xs text-amber-300 mb-1">M3 · W8</div>
+        <div class="text-sm font-semibold">권한·주문·작업 완료</div>
+        <div class="mt-1 text-[11px] text-slate-500">엑셀 업로드→배정→칸반 관통</div>
+      </div>
+      <div class="rounded-xl p-4 bg-purple-500/10 border border-purple-500/30 spring-hover">
+        <div class="font-mono text-xs text-purple-300 mb-1">M4 · W12</div>
+        <div class="text-sm font-semibold">결재·정산 완료 (7연쇄)</div>
+        <div class="mt-1 text-[11px] text-slate-500">실제 사례 금액 재현 일치</div>
+      </div>
+      <div class="rounded-xl p-4 bg-white/5 border border-white/10 spring-hover">
+        <div class="font-mono text-xs text-amber-300 mb-1">M5 · W15</div>
+        <div class="text-sm font-semibold">Freeze + 통합 테스트</div>
+        <div class="mt-1 text-[11px] text-slate-500">필수 케이스 10종 전건 통과</div>
+      </div>
+      <div class="rounded-xl p-4 bg-white/5 border border-white/10 spring-hover">
+        <div class="font-mono text-xs text-amber-300 mb-1">M6 · W17</div>
+        <div class="text-sm font-semibold">검수·오픈</div>
+        <div class="mt-1 text-[11px] text-slate-500">검수 확인서 · 산출물 5종 인도</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== WHY-US — 차별화 비교 =========== -->
+  <section id="why-us" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="mb-10">
+      <div class="text-xs font-mono text-purple-400 mb-3">10 · WHY-US</div>
+      <h2 class="text-4xl md:text-5xl font-bold leading-tight">왜 우리인가</h2>
+      <p class="mt-3 text-lg text-slate-300">우대사항 "복잡한 전자 결재 워크플로우 개발 경험"에 실무로 답합니다</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- EKP lead card -->
+      <div class="rounded-3xl p-8 bg-gradient-to-br from-purple-500/20 to-pink-500/10 border border-purple-500/25 shadow-2xl shadow-purple-500/20">
+        <div class="flex items-center gap-2 text-xs font-mono text-purple-300 mb-4">
+          <i data-lucide="award" class="w-4 h-4"></i>
+          우대사항 직결 경력
+        </div>
+        <h3 class="text-2xl font-bold leading-snug mb-3">산업은행 EKP<br/>전자결재 시스템 유지보수</h3>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          금융권 전자결재 — 승인선·대결/전결·문서 상태기계·감사 추적을 대규모 실무로 다뤘습니다.
+          이 공고의 결재 엔진은 처음 만드는 기능이 아니라 <span class="text-purple-300 font-semibold">이미 운영해 본 도메인</span>입니다.
+        </p>
+        <div class="mt-6 space-y-2.5 text-sm text-slate-300">
+          <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>22년 Java/Spring Boot 백엔드 · 32+ 프로젝트</div>
+          <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>ERP·금융·관리자 시스템 다수</div>
+          <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>AI/LLM 통합 — 판례 8만 건 RAG · 업무 자동화</div>
+          <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>크롤링·데이터 수집 도구 운영 (Playwright)</div>
+        </div>
+      </div>
+
+      <!-- Comparison table -->
+      <div class="lg:col-span-2 rounded-2xl backdrop-blur-3xl bg-white/5 border border-white/10 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-slate-400 border-b border-white/10">
+                <th class="px-6 py-4">차별화 포인트 (제안서 §6)</th>
+                <th class="px-4 py-4 text-purple-300">우리</th>
+                <th class="px-4 py-4">일반 지원자</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-300">
+              <tr class="border-b border-white/5">
+                <td class="px-6 py-3.5 font-medium">정합성 중심 설계</td>
+                <td class="px-4 py-3.5 text-xs"><span class="inline-flex items-center gap-1.5 text-emerald-300"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>이벤트 원장 + 7연쇄 TX + 감사 로그 — ADR 8건 완료</span></td>
+                <td class="px-4 py-3.5 text-xs text-slate-500"><span class="inline-flex items-center gap-1.5"><i data-lucide="x" class="w-3.5 h-3.5"></i>화면 목록 중심 견적</span></td>
+              </tr>
+              <tr class="border-b border-white/5">
+                <td class="px-6 py-3.5 font-medium">전자결재 실무 경험</td>
+                <td class="px-4 py-3.5 text-xs"><span class="inline-flex items-center gap-1.5 text-emerald-300"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>산업은행 EKP 유지보수 (우대사항 직결)</span></td>
+                <td class="px-4 py-3.5 text-xs text-slate-500"><span class="inline-flex items-center gap-1.5"><i data-lucide="x" class="w-3.5 h-3.5"></i>결재 경험 불명</span></td>
+              </tr>
+              <tr class="border-b border-white/5">
+                <td class="px-6 py-3.5 font-medium">레퍼런스 UI + 동작 프로토타입 선제작</td>
+                <td class="px-4 py-3.5 text-xs"><span class="inline-flex items-center gap-1.5 text-emerald-300"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>이 페이지 + 클릭 가능한 관리자 콘솔 9화면 (주문·작업·결재·정산·HR·권한)</span></td>
+                <td class="px-4 py-3.5 text-xs text-slate-500"><span class="inline-flex items-center gap-1.5"><i data-lucide="x" class="w-3.5 h-3.5"></i>텍스트 지원서</span></td>
+              </tr>
+              <tr class="border-b border-white/5">
+                <td class="px-6 py-3.5 font-medium">자동화/수동화 분리 제안 (공고 직접 요구)</td>
+                <td class="px-4 py-3.5 text-xs"><span class="inline-flex items-center gap-1.5 text-emerald-300"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>업무 9종 구분표 + 3~4주차 PoC 로드맵</span></td>
+                <td class="px-4 py-3.5 text-xs text-slate-500"><span class="inline-flex items-center gap-1.5"><i data-lucide="x" class="w-3.5 h-3.5"></i>"전부 자동화 가능" 낙관</span></td>
+              </tr>
+              <tr class="border-b border-white/5">
+                <td class="px-6 py-3.5 font-medium">AI 래피드 프로토타이핑</td>
+                <td class="px-4 py-3.5 text-xs"><span class="inline-flex items-center gap-1.5 text-emerald-300"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>2주차 실브라우저 화면 컨펌 → 재작업 최소화</span></td>
+                <td class="px-4 py-3.5 text-xs text-slate-500"><span class="inline-flex items-center gap-1.5"><i data-lucide="x" class="w-3.5 h-3.5"></i>문서형 와이어프레임</span></td>
+              </tr>
+              <tr class="border-b border-white/5">
+                <td class="px-6 py-3.5 font-medium">AI/LLM 통합 역량 (Phase 2 대비)</td>
+                <td class="px-4 py-3.5 text-xs"><span class="inline-flex items-center gap-1.5 text-emerald-300"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>RAG·API 자동화 검증된 실행력 (ADR-004)</span></td>
+                <td class="px-4 py-3.5 text-xs text-slate-500"><span class="inline-flex items-center gap-1.5"><i data-lucide="x" class="w-3.5 h-3.5"></i>—</span></td>
+              </tr>
+              <tr>
+                <td class="px-6 py-3.5 font-medium">일정 방어 체계</td>
+                <td class="px-4 py-3.5 text-xs"><span class="inline-flex items-center gap-1.5 text-emerald-300"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>14주차 Freeze + 리스크 17건 사전 식별·대응</span></td>
+                <td class="px-4 py-3.5 text-xs text-slate-500"><span class="inline-flex items-center gap-1.5"><i data-lucide="x" class="w-3.5 h-3.5"></i>일정표만 제출</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="px-6 py-4 border-t border-white/5 text-xs text-slate-500">
+          "이 프로젝트의 진짜 난이도는 화면 수가 아니라 환불 승인의 7단계 연쇄 처리 — 저는 그걸 알고 시작합니다."
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== CTA — 미팅 제안 + ROI =========== -->
+  <section id="cta" class="max-w-7xl mx-auto px-6 py-20 md:py-32 scroll-reveal">
+    <div class="rounded-3xl p-8 md:p-12 bg-gradient-to-br from-purple-500/15 via-slate-900/60 to-emerald-500/10 border border-purple-500/25 shadow-2xl shadow-purple-500/20">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+        <div>
+          <div class="text-xs font-mono text-purple-400 mb-3">11 · NEXT STEP</div>
+          <h2 class="text-4xl md:text-5xl font-bold leading-tight">
+            범위 정리 미팅을<br/><span class="bg-gradient-to-r from-purple-400 to-emerald-400 bg-clip-text text-transparent">제안합니다</span>
+          </h2>
+          <p class="mt-4 text-lg text-slate-300 leading-relaxed">
+            기술 검토 미팅 환영 — 이 페이지의 ADR·도메인 코드·API 설계를 화면 공유로 함께 리뷰하고,
+            질의 10건을 30분 안에 정리해 드립니다.
+          </p>
+
+          <!-- 착수 3일 내 필요한 것 -->
+          <div class="mt-8 rounded-2xl p-6 bg-white/5 border border-white/10">
+            <div class="flex items-center gap-2 font-semibold mb-4">
+              <i data-lucide="package-check" class="w-4 h-4 text-emerald-400"></i>
+              착수 3일 내 필요한 것 — 딱 3가지
+            </div>
+            <ol class="space-y-3 text-sm text-slate-300">
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-mono text-xs text-purple-300 flex-shrink-0">1</span>
+                <span>주문·환불·재결제·정산 <span class="text-purple-300 font-semibold">실제 사례 5~10건</span> (개인정보 마스킹 가능) — 정산 로직 확정의 유일한 근거</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-mono text-xs text-purple-300 flex-shrink-0">2</span>
+                <span>현재 사용 중인 <span class="text-purple-300 font-semibold">엑셀 관리 양식 전체</span> + 업무 프로세스 흐름도</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-mono text-xs text-purple-300 flex-shrink-0">3</span>
+                <span><span class="text-purple-300 font-semibold">판매 플랫폼 목록</span> — API 제공 여부 확인용 (3~4주차 PoC 대상 선정)</span>
+              </li>
+            </ol>
+          </div>
+
+          <!-- 미팅에서 다룰 것 -->
+          <div class="mt-4 flex flex-wrap gap-2 text-xs">
+            <span class="rounded-full px-3 py-1.5 bg-white/5 border border-white/10 text-slate-300">✓ 질의 10건 정리</span>
+            <span class="rounded-full px-3 py-1.5 bg-white/5 border border-white/10 text-slate-300">✓ 자동화/수동화 구분표 합의</span>
+            <span class="rounded-full px-3 py-1.5 bg-white/5 border border-white/10 text-slate-300">✓ ADR·코드 리뷰 가능</span>
+            <span class="rounded-full px-3 py-1.5 bg-white/5 border border-white/10 text-slate-300">✓ 14주차 Freeze 원칙 합의</span>
+          </div>
+
+          <div class="mt-8 flex flex-wrap items-center gap-3">
+            <a href="proto/index.html" class="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-200 hover:bg-emerald-500/25 transition">
+              <i data-lucide="mouse-pointer-click" class="w-4 h-4"></i>
+              라이브 데모 다시 보기
+            </a>
+            <a href="demo/자동시연.html" class="inline-flex items-center gap-2 rounded-xl px-5 py-3 font-semibold bg-purple-500/15 border border-purple-500/30 text-purple-200 hover:bg-purple-500/25 transition">
+              <i data-lucide="video" class="w-4 h-4"></i>
+              1분 30초 자동 시연
+            </a>
+          </div>
+          <p class="mt-4 text-xs text-slate-500">미팅 일정은 위시켓 메시지로 제안 부탁드립니다 — 당일 회신 원칙</p>
+        </div>
+
+        <!-- ROI Calculator -->
+        <div class="rounded-2xl p-8 backdrop-blur-3xl bg-white/5 border border-white/10">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="calculator" class="w-4 h-4 text-emerald-400"></i>
+            <h3 class="font-semibold">숫자 맞추기 작업, 얼마나 줄어들까요?</h3>
+          </div>
+          <p class="text-xs text-slate-500 mb-6">환불·재결제 1건이 발생할 때마다 엑셀 3~4개를 열어 수작업 대사(약 20분/건)하는 현재 방식 기준의 간이 추정입니다</p>
+
+          <label for="roi-trades" class="text-sm text-slate-300">월 환불·재결제·정산 조정 건수</label>
+          <div class="mt-3 flex items-center gap-4">
+            <input type="range" id="roi-trades" min="1" max="30" value="10" class="flex-1" aria-label="월 환불·재결제·정산 조정 건수">
+            <span id="roi-trades-display" class="font-mono text-purple-300 font-bold w-14 text-right">10회</span>
+          </div>
+
+          <div class="mt-8 grid grid-cols-2 gap-4">
+            <div class="rounded-xl p-5 bg-emerald-500/5 border border-emerald-500/20">
+              <div class="text-xs text-slate-400 mb-1">연간 수작업 대사 절감</div>
+              <div class="text-4xl font-bold text-emerald-400 font-mono"><span id="roi-hours">40</span><span class="text-lg">시간</span></div>
+            </div>
+            <div class="rounded-xl p-5 bg-purple-500/5 border border-purple-500/20">
+              <div class="text-xs text-slate-400 mb-1">인건비 환산 (5만원/시)</div>
+              <div class="text-4xl font-bold text-purple-300 font-mono">₩<span id="roi-cost">2,000,000</span></div>
+            </div>
+          </div>
+
+          <p class="mt-5 text-xs text-slate-500 leading-relaxed">
+            더 큰 가치는 절감 시간이 아니라 <span class="text-slate-300">"숫자가 항상 맞는다"는 확신</span>입니다 —
+            승인 즉시 7연쇄가 매출·정산·손익을 함께 움직이므로 월말 대사 작업 자체가 사라집니다.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== FOOTER =========== -->
+  <footer class="border-t border-white/10 bg-slate-950/60">
+    <div class="max-w-7xl mx-auto px-6 py-10">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div>
+          <div class="flex items-center gap-2 font-semibold">
+            <div class="w-6 h-6 rounded-md bg-gradient-to-br from-purple-500 via-pink-500 to-emerald-500"></div>
+            마케팅 대행사 통합 ERP — 레퍼런스 UI
+          </div>
+          <p class="mt-2 text-xs text-slate-500 max-w-xl leading-relaxed">
+            본 UI는 위시켓 #156767 제안서 참고용이며 실제 서비스가 아닙니다. 모든 고객사명·금액·지표는 가상의 데모 데이터입니다.
+            분석 산출물(요구사항 검토서·질의서·실행계획·리스크 분석)에 근거해 제작되었습니다.
+          </p>
+        </div>
+        <div class="flex flex-col items-start md:items-end gap-2 text-xs text-slate-500">
+          <div class="flex flex-wrap items-center gap-3">
+            <a href="./index.html" class="hover:text-purple-400 transition">랜딩</a>
+            <a href="./nonit.html" class="hover:text-purple-400 transition">일반 고객용 버전</a>
+            <a href="proto/index.html" class="hover:text-emerald-400 transition">라이브 데모</a>
+            <a href="demo/자동시연.html" class="hover:text-purple-400 transition">자동 시연</a>
+            <a href="../pt/index.html" class="hover:text-cyan-400 transition">미팅 PT</a>
+          </div>
+          <div class="font-mono">
+            WISHKET #156767 · 갱신 2026-07-10 · generated by wishket-refui
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========== ⌘K Command Menu =========== -->
+  <div id="cmdk-backdrop" class="hidden fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm" aria-hidden="true"></div>
+  <div id="cmdk-modal" class="hidden fixed inset-x-0 top-24 z-50 items-start justify-center px-4" role="dialog" aria-modal="true" aria-label="섹션 검색">
+    <div class="w-full max-w-lg rounded-2xl bg-slate-900/95 border border-white/10 shadow-2xl shadow-purple-500/20 overflow-hidden">
+      <div class="flex items-center gap-3 px-4 py-3 border-b border-white/10">
+        <i data-lucide="search" class="w-4 h-4 text-slate-500"></i>
+        <input id="cmdk-input" type="text" placeholder="섹션 검색… (↑↓ 이동 · Enter 선택 · Esc 닫기)"
+               class="flex-1 bg-transparent outline-none text-sm text-slate-200 placeholder:text-slate-500" autocomplete="off" />
+        <kbd class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-slate-400">ESC</kbd>
+      </div>
+      <div class="max-h-80 overflow-y-auto py-2">
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#top"><i data-lucide="home" class="w-4 h-4 text-slate-500"></i>Hero — 숫자가 꼬이지 않는 대행사 통합 ERP</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#hero-insights"><i data-lucide="sparkles" class="w-4 h-4 text-slate-500"></i>이해 — Top 3 확인사항</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#core"><i data-lucide="git-branch" class="w-4 h-4 text-purple-400"></i>CORE — 환불 승인 7연쇄</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#portfolio"><i data-lucide="layout-dashboard" class="w-4 h-4 text-emerald-400"></i>PORTFOLIO — 경영 대시보드</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#engine"><i data-lucide="sigma" class="w-4 h-4 text-pink-400"></i>ENGINE — 덮어쓰지 않는 정산 엔진</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#operator"><i data-lucide="shield-check" class="w-4 h-4 text-cyan-400"></i>OPERATOR — 운영·권한·수집</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#insights"><i data-lucide="help-circle" class="w-4 h-4 text-amber-400"></i>INSIGHTS — 모호·누락 이슈</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#pre-qna"><i data-lucide="award" class="w-4 h-4 text-emerald-400"></i>사전 질문 답변 — 주신 질문에 먼저 답합니다</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#questions"><i data-lucide="message-circle-question" class="w-4 h-4 text-purple-400"></i>QUESTIONS — 발주자 질의 10건</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#risks"><i data-lucide="alert-triangle" class="w-4 h-4 text-red-400"></i>RISKS — 리스크 매트릭스 17건</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#architecture"><i data-lucide="box" class="w-4 h-4 text-cyan-400"></i>ARCHITECTURE — 스택·ADR·코드·API</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#timeline"><i data-lucide="calendar-range" class="w-4 h-4 text-emerald-400"></i>TIMELINE — 17주 실행계획</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#why-us"><i data-lucide="award" class="w-4 h-4 text-purple-400"></i>WHY-US — 차별화 비교</button>
+        <button class="cmdk-item w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 transition text-left" data-target="#cta"><i data-lucide="handshake" class="w-4 h-4 text-emerald-400"></i>CTA — 미팅 제안 · ROI</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========== Side Panel (리스크 상세) =========== -->
+  <aside id="side-panel" class="fixed right-0 top-0 h-screen w-full max-w-md translate-x-full transition-transform duration-300 z-50 backdrop-blur-3xl bg-slate-900/95 border-l border-white/10 shadow-2xl" aria-label="상세 패널">
+    <div class="flex items-center justify-between p-5 border-b border-white/10">
+      <h3 id="side-panel-title" class="font-semibold text-sm pr-4"></h3>
+      <button id="side-panel-close" class="p-2 rounded-lg hover:bg-white/10 transition flex-shrink-0" aria-label="패널 닫기">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+    <div id="side-panel-body" class="p-5 overflow-y-auto" style="max-height: calc(100vh - 65px);"></div>
+  </aside>
+
+  <!-- Scripts -->
+  <script src="./client.js"></script>
+  <script>
+    // Lucide 아이콘 렌더 (client.js가 side panel 등 DOM을 준비한 뒤 호출)
+    if (window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>

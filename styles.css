@@ -1,0 +1,199 @@
+/* =============================================
+   wishket-refui · Custom CSS
+   Tailwind CDN 보완 · 다크 모드 전용
+   ============================================= */
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.5); }
+
+/* Selection */
+::selection { background: rgba(139,92,246,0.4); color: #fff; }
+
+/* Range input — Glassmorphism slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.1);
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  box-shadow: 0 0 0 4px rgba(139,92,246,0.2), 0 4px 12px rgba(139,92,246,0.4);
+  cursor: grab;
+  transition: transform 0.15s;
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.25); }
+input[type="range"]::-moz-range-thumb {
+  width: 20px; height: 20px; border: none; border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  box-shadow: 0 0 0 4px rgba(139,92,246,0.2);
+  cursor: grab;
+}
+
+/* Focus rings */
+:focus-visible {
+  outline: 2px solid #a855f7;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Prism override */
+pre[class*="language-"] {
+  margin: 0 !important;
+  background: rgba(2, 6, 23, 0.8) !important;
+  border-radius: 0.75rem !important;
+}
+code[class*="language-"] {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.75rem !important;
+  line-height: 1.5 !important;
+}
+
+/* Accordion (QUESTIONS) */
+.accordion-item summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.2s;
+}
+.accordion-item summary:hover { background: rgba(255,255,255,0.03); }
+.accordion-item summary::-webkit-details-marker { display: none; }
+.accordion-item summary::before {
+  content: '▸';
+  color: #a855f7;
+  font-size: 0.875rem;
+  transition: transform 0.2s;
+}
+.accordion-item[open] summary::before { transform: rotate(90deg); }
+.accordion-item .accordion-body {
+  padding: 1rem 1.5rem 1.5rem 2.75rem;
+  color: #cbd5e1;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  background: rgba(168, 85, 247, 0.03);
+}
+
+/* Gantt bars */
+.gantt-bar {
+  height: 28px;
+  border-radius: 6px;
+  position: relative;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.gantt-bar:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(139,92,246,0.3); }
+.gantt-bar-p1 { background: linear-gradient(90deg, rgba(168,85,247,0.7), rgba(168,85,247,0.5)); }
+.gantt-bar-p2 { background: linear-gradient(90deg, rgba(236,72,153,0.7), rgba(236,72,153,0.5)); }
+.gantt-bar-p3 { background: linear-gradient(90deg, rgba(16,185,129,0.7), rgba(16,185,129,0.5)); }
+.gantt-bar-p4 { background: linear-gradient(90deg, rgba(6,182,212,0.7), rgba(6,182,212,0.5)); }
+
+.milestone-marker {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 0 0 3px rgba(251,191,36,0.2), 0 0 20px rgba(251,191,36,0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: bold; color: #020617;
+  position: relative;
+  margin: 0 auto;
+}
+
+/* Risk matrix tooltip */
+.risk-tooltip {
+  position: absolute;
+  padding: 0.75rem 1rem;
+  background: rgba(2, 6, 23, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  color: #e2e8f0;
+  pointer-events: none;
+  z-index: 50;
+  min-width: 200px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+/* Chat message bubble */
+.chat-msg-user {
+  background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(236,72,153,0.15));
+  border: 1px solid rgba(168,85,247,0.2);
+  align-self: flex-end;
+  margin-left: auto;
+  max-width: 85%;
+}
+.chat-msg-ai {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  align-self: flex-start;
+  max-width: 85%;
+}
+
+/* Arch tab */
+.arch-tab-trigger[aria-selected="true"] {
+  background: rgba(6, 182, 212, 0.1);
+  border-bottom-color: #22d3ee !important;
+  color: #22d3ee;
+}
+
+/* Spring-like hover for cards */
+.spring-hover {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.3s ease-out,
+              background-color 0.2s;
+}
+.spring-hover:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 12px 40px rgba(139,92,246,0.25);
+}
+
+/* Shimmer loading placeholder (선택) */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  #chatbot-panel { bottom: 5rem; right: 0.75rem; }
+  h1 { font-size: 2.5rem !important; line-height: 1.1 !important; }
+  h2 { font-size: 2rem !important; line-height: 1.1 !important; }
+  .scroll-reveal { animation: none; opacity: 1; transform: none; }
+}
+
+/* Prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print styles (PDF 내보내기 고려) */
+@media print {
+  .fixed { position: static !important; }
+  .aurora-bg { display: none; }
+  body { background: white; color: black; }
+}
